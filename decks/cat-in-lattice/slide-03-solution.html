@@ -10,7 +10,7 @@
   .slide {
     width: 1920px; height: 1080px;
     background: #0d1117;
-    padding: 80px 120px;
+    padding: 64px 100px;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #e6edf3; position: relative;
   }
@@ -19,156 +19,286 @@
     font-size: 18px; color: #484f58;
   }
   h1 {
-    font-size: 64px; font-weight: 800;
-    color: #3fb950; margin-bottom: 16px;
+    font-size: 56px; font-weight: 800;
+    color: #3fb950; margin-bottom: 8px;
   }
   .one-liner {
-    font-size: 28px; color: #8b949e;
-    margin-bottom: 48px;
+    font-size: 24px; color: #8b949e;
+    margin-bottom: 32px;
   }
-  .layout-demo {
-    display: flex; gap: 4px;
-    background: #161b22; border: 2px solid #30363d;
-    border-radius: 12px; overflow: hidden;
-    height: 480px; margin-bottom: 48px;
+  .main-content {
+    display: flex; gap: 40px; align-items: stretch;
+    height: 500px; margin-bottom: 16px;
   }
-  .panel {
+  /* Left: brick game image */
+  .brick-side {
+    width: 260px; flex-shrink: 0;
     display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    padding: 24px;
+    align-items: center; justify-content: center;
+    position: relative;
   }
-  .panel-cat {
-    width: 380px; background: #1a1e24;
-    border-right: 1px solid #30363d;
+  .brick-side img {
+    height: 480px; border-radius: 16px;
+    filter: drop-shadow(0 8px 32px rgba(240,160,64,0.3));
   }
-  .panel-cat .cat-art {
-    font-family: 'Fira Code', monospace;
-    font-size: 14px; line-height: 1.15;
-    color: #f0a040; white-space: pre;
+  .brick-label {
+    margin-top: 12px; font-size: 16px; color: #484f58;
     text-align: center;
   }
-  .panel-cat .stats {
-    margin-top: 16px; font-size: 14px;
-    color: #8b949e; text-align: center;
+  .arrow-bridge {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; color: #f0a040; flex-shrink: 0;
+    width: 60px;
   }
-  .panel-banner {
-    flex: 1; background: #0d1117;
-    padding: 32px;
+  /* Right: terminal mock */
+  .terminal-side {
+    flex: 1; display: flex; flex-direction: column;
   }
-  .feature-list {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 24px;
+  .terminal-window {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 12px; overflow: hidden;
+    flex: 1; display: flex; flex-direction: column;
   }
-  .feature {
-    display: flex; gap: 16px; align-items: flex-start;
+  .terminal-titlebar {
+    background: #161b22; padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
   }
-  .feature .icon {
-    font-size: 36px; flex-shrink: 0;
-    width: 48px; text-align: center;
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .titlebar-text {
+    font-size: 13px; color: #484f58;
+    font-family: 'Fira Code', monospace; margin-left: 8px;
   }
-  .feature h3 {
-    font-size: 24px; font-weight: 700;
-    color: #e6edf3; margin-bottom: 4px;
+  .terminal-body {
+    flex: 1; display: flex; flex-direction: column;
   }
-  .feature p {
-    font-size: 18px; color: #8b949e; line-height: 1.4;
+  /* Top pane: agent output */
+  .agent-pane {
+    flex: 1; padding: 12px 16px;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px; line-height: 1.5;
+    color: #484f58; border-bottom: 2px solid #f0a040;
+    overflow: hidden;
   }
-  .alert-box {
-    background: #1c2128; border: 1px solid #238636;
-    border-radius: 8px; padding: 16px 20px;
-    margin-bottom: 16px;
+  .agent-pane .prompt { color: #58a6ff; }
+  .agent-pane .output { color: #8b949e; }
+  .agent-pane .success { color: #3fb950; }
+  /* Bottom pane: cat companion */
+  .companion-pane {
+    display: flex; height: 260px;
   }
-  .alert-box .label {
-    font-size: 14px; color: #3fb950;
-    font-weight: 600; margin-bottom: 4px;
+  .cp-cat {
+    width: 260px; padding: 8px 12px;
+    border-right: 1px solid #30363d;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
   }
-  .alert-box .msg {
-    font-size: 18px; color: #e6edf3;
+  .cp-cat .cat-art {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px; line-height: 1.1;
+    color: #f0a040; white-space: pre;
+  }
+  .cp-cat .stats {
+    font-size: 10px; color: #8b949e; margin-top: 6px;
+  }
+  .cp-banner {
+    flex: 1; padding: 10px 16px;
+    display: flex; gap: 8px;
+  }
+  .mini-game-display {
+    background: #0d1117; border: 1px solid #f0a040;
+    border-radius: 8px; padding: 10px 16px;
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .mini-game-title {
+    font-size: 12px; color: #f0a040; font-weight: 700;
+    font-family: 'Fira Code', monospace;
+    margin-bottom: 6px;
+  }
+  .breakout-art {
+    font-family: 'Fira Code', monospace;
+    font-size: 10px; line-height: 1.2;
+    color: #e6edf3; white-space: pre;
+  }
+  .brk-r { color: #ff6b6b; }
+  .brk-y { color: #febc2e; }
+  .brk-g { color: #3fb950; }
+  .brk-b { color: #58a6ff; }
+  .mini-game-score {
+    font-size: 11px; color: #8b949e;
+    font-family: 'Fira Code', monospace;
+    margin-top: 6px;
+  }
+  .side-panel {
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
   }
   .quote-box {
-    background: #1c2128; border: 1px solid #30363d;
-    border-radius: 8px; padding: 16px 20px;
-    margin-bottom: 16px;
+    background: #0d1117; border: 1px solid #30363d;
+    border-radius: 8px; padding: 10px 14px;
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center;
   }
-  .quote-box .text {
-    font-size: 18px; color: #e6edf3;
-    font-style: italic;
+  .quote-box .quote-icon {
+    font-size: 14px; color: #484f58; margin-bottom: 4px;
   }
-  .quote-box .author {
-    font-size: 14px; color: #484f58;
-    margin-top: 8px;
+  .quote-box .quote-text {
+    font-size: 12px; color: #8b949e;
+    font-family: 'Pretendard', sans-serif;
+    font-style: italic; line-height: 1.5;
   }
+  .quote-box .quote-author {
+    font-size: 10px; color: #484f58; margin-top: 6px;
+    text-align: right;
+  }
+  .alert-box {
+    background: #0d1117; border: 1px solid #3fb950;
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .alert-box .alert-title {
+    font-size: 11px; color: #3fb950; font-weight: 700;
+    font-family: 'Fira Code', monospace;
+  }
+  .alert-item {
+    font-size: 10px; color: #8b949e;
+    font-family: 'Fira Code', monospace;
+    line-height: 1.4;
+  }
+  .alert-item .check { color: #3fb950; }
   .helpbar {
     background: #21262d;
-    padding: 8px 16px; font-size: 13px;
+    padding: 4px 12px; font-size: 11px;
     color: #8b949e; font-family: 'Fira Code', monospace;
-    border-radius: 0 0 10px 10px;
   }
+  .pane-label {
+    position: absolute; font-size: 12px; color: #f0a040;
+    font-weight: 700; letter-spacing: 1px;
+  }
+  /* Bottom feature pills */
+  .feature-row {
+    display: flex; gap: 20px; justify-content: center;
+    margin-top: 8px;
+  }
+  .fpill {
+    display: flex; align-items: center; gap: 14px;
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 14px; padding: 18px 24px;
+    flex: 1;
+  }
+  .fpill .icon { font-size: 40px; }
+  .fpill h3 { font-size: 22px; font-weight: 800; color: #e6edf3; margin-bottom: 2px; }
+  .fpill .hook { font-size: 13px; font-weight: 700; color: #f0a040; margin-bottom: 4px; }
+  .fpill p { font-size: 15px; color: #8b949e; }
 </style>
 </head>
 <body>
 <div class="slide">
   <div class="slide-number">03 / 06</div>
   <h1>Solution: Cat-In-Lattice</h1>
-  <div class="one-liner">Ghostty split pane 위 픽셀아트 고양이 companion — 상태 알림 + 타마고치 + 미니게임</div>
+  <div class="one-liner">추억의 벽돌게임기를 터미널 안에 넣었다 — 에이전트 상태 알림 + 타마고치 + 미니게임</div>
 
-  <div class="layout-demo">
-    <div class="panel panel-cat">
-      <div class="cat-art">
-        ╱╲     ╱╲
-       ╱██╲   ╱██╲
-      ╱████╲_╱████╲
-     ┌──────────────┐
-     │  ≧        ≦  │
-     │      ▼▼      │
-     │  ╱══╗▽▽╔══╲  │
-     │ │ ═══╝╚═══ │ │
-     └──┬────────┬──┘
-      ┌─┘ ░░░░░░ └─┐
-     ┌┘  ░░░░░░░░  └┐
-     │  ░░░░░░░░░░  │
-     │ ░░░░░░░░░░░░ │
-     └─┬──┘    └──┬─┘
-       └──┘    └──┘ ⌠
-      </div>
-      <div class="stats">
-        Mood: Happy | Aff: 82 | Hun: 15<br>
-        Pets: 47 | Feeds: 23
-      </div>
+  <div class="main-content">
+    <!-- Left: Brick Game -->
+    <div class="brick-side">
+      <img src="./assets/brick-game.png" alt="Brick Game 게임기">
+      <div class="brick-label">추억의 그것</div>
     </div>
-    <div class="panel panel-banner">
-      <div class="alert-box">
-        <div class="label">[COMPLETE] Agent Alert</div>
-        <div class="msg">build finished: 68 tests passed, 0 warnings</div>
-      </div>
-      <div class="quote-box">
-        <div class="text">"The best way to predict the future is to invent it."</div>
-        <div class="author">— Alan Kay</div>
-      </div>
-      <div class="alert-box" style="border-color: #58a6ff;">
-        <div class="label" style="color: #58a6ff;">[Slack] Team Notice</div>
-        <div class="msg">내일 11시 디자인 리뷰 미팅 있습니다</div>
+
+    <!-- Arrow -->
+    <div class="arrow-bridge">→</div>
+
+    <!-- Right: Terminal mock -->
+    <div class="terminal-side">
+      <div class="terminal-window">
+        <div class="terminal-titlebar">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+          <div class="titlebar-text">ghostty — claude code</div>
+        </div>
+        <div class="terminal-body">
+          <!-- Agent pane (top) -->
+          <div class="agent-pane">
+            <div><span class="prompt">$</span> claude --dangerously-skip-permissions</div>
+            <div class="output">⠋ Thinking...</div>
+            <div class="output">⠋ Building src/app.rs...</div>
+            <div class="success">✓ 68 tests passed, 0 warnings</div>
+            <div class="output">⠋ Writing src/ui.rs...</div>
+          </div>
+          <!-- Companion pane (bottom) -->
+          <div class="companion-pane">
+            <div class="cp-cat">
+              <div class="cat-art">     ╱╲     ╱╲
+    ╱██╲   ╱██╲
+   ╱████╲_╱████╲
+  ┌──────────────┐
+  │  ≧        ≦  │
+  │      ▼▼      │
+  │  ╱══╗▽▽╔══╲  │
+  └──┬────────┬──┘
+   ┌─┘ ░░░░░░ └─┐
+  │ ░░░░░░░░░░░░ │
+  └─┬──┘    └──┬─┘
+    └──┘    └──┘ ⌠</div>
+              <div class="stats">Mood: Happy | Aff: 82</div>
+            </div>
+            <div class="cp-banner">
+              <div class="mini-game-display">
+                <p class="mini-game-title">[4] Breakout</p>
+                <div class="breakout-art">████████████████████████████
+<span class="brk-r">██████</span> <span class="brk-y">██████</span> <span class="brk-g">██████</span> <span class="brk-b">██████</span>
+<span class="brk-r">██████</span> <span class="brk-y">██████</span> <span class="brk-g">██████</span> <span class="brk-b">██████</span>
+<span class="brk-y">██████</span> <span class="brk-g">██████</span> <span class="brk-b">██████</span> <span class="brk-r">██████</span>
+<span class="brk-g">██████</span> <span class="brk-b">██████</span> <span class="brk-r">██████</span> <span class="brk-y">██████</span>
+
+              ●
+
+
+         ▓▓▓▓▓▓▓▓▓▓▓▓</div>
+                <p class="mini-game-score">Score: 2480  Lives: ♥♥♥</p>
+              </div>
+              <div class="side-panel">
+                <div class="quote-box">
+                  <p class="quote-icon">💬</p>
+                  <p class="quote-text">"First, solve the problem. Then, write the code."</p>
+                  <p class="quote-author">— John Johnson</p>
+                </div>
+                <div class="alert-box">
+                  <p class="alert-title">✅ 작업 완료</p>
+                  <p class="alert-item"><span class="check">✓</span> build 완료 — 0 errors</p>
+                  <p class="alert-item"><span class="check">✓</span> 68 tests passed</p>
+                  <p class="alert-item"><span class="check">✓</span> deploy #42 성공</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="helpbar">[P]et [F]eed [1]Pacman [2]Snake [3]Tetris [4]Breakout [H]elp [Q]uit</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="helpbar">[P]et  [F]eed  [1]Pacman  [2]Snake  [3]Tetris  [4]Breakout  [H]elp  [Q]uit</div>
 
-  <div class="feature-list" style="margin-top: 32px;">
-    <div class="feature">
+  <div class="feature-row">
+    <div class="fpill">
       <div class="icon">🐱</div>
-      <div><h3>다마고치 고양이</h3><p>친밀도·배고픔 영속, 하루 20회 이벤트</p></div>
+      <div><p class="hook">귀여운!</p><h3>다마고치 고양이</h3><p>친밀도·배고픔 영속, 하루 20회 이벤트</p></div>
     </div>
-    <div class="feature">
+    <div class="fpill">
       <div class="icon">📢</div>
-      <div><h3>스마트 배너</h3><p>Slack 공지 + 명언 + 에이전트 알림</p></div>
+      <div><p class="hook">똑똑한!</p><h3>스마트 배너</h3><p>Slack 공지 + 명언 + 에이전트 알림</p></div>
     </div>
-    <div class="feature">
+    <div class="fpill">
       <div class="icon">🎮</div>
-      <div><h3>미니게임 4종</h3><p>대기 시간 킬링타임 — 포커스 전환</p></div>
+      <div><p class="hook">재밌다!</p><h3>미니게임 4종</h3><p>대기 시간 킬링타임</p></div>
     </div>
-    <div class="feature">
+    <div class="fpill">
       <div class="icon">📐</div>
-      <div><h3>적응형 레이아웃</h3><p>고양이 고정폭 + 터미널 리사이즈 대응</p></div>
+      <div><p class="hook">간결함!</p><h3>적응형 레이아웃</h3><p>고양이 고정폭 + 리사이즈 대응</p></div>
     </div>
   </div>
 </div>

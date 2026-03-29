@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .viewer-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation bar */
+    .nav-bar {
+      height: 48px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .nav-bar button {
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .nav-bar button:hover {
+      background: #555;
+    }
+
+    .nav-bar button:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .slide-counter {
+      color: #aaa;
+      font-size: 14px;
+      font-weight: 500;
+      min-width: 60px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-fullscreen {
+      position: absolute;
+      right: 16px;
+      background: transparent !important;
+      font-size: 18px;
+      padding: 6px 10px !important;
+    }
+
+    /* Slide viewport */
+    .slide-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .slide-scaler {
+      width: 720pt;
+      height: 405pt;
+      position: relative;
+      transform-origin: center center;
+    }
+
+    /* Slide frames (iframes) */
+    .slide-frame {
+      position: absolute;
+      inset: 0;
+      width: 720pt;
+      height: 405pt;
+      border: none;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .slide-frame.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="viewer-container">
+    <!-- Navigation -->
+    <div class="nav-bar">
+      <button id="btn-prev" title="Previous (\u2190)">Prev</button>
+      <span class="slide-counter" id="counter">1 / 6</span>
+      <button id="btn-next" title="Next (\u2192)">Next</button>
+      <button class="btn-fullscreen" id="btn-fs" title="Fullscreen (F)">&#x26F6;</button>
+    </div>
+
+    <!-- Slide viewport -->
+    <div class="slide-viewport" id="viewport">
+      <div class="slide-scaler" id="scaler">
+        <iframe class="slide-frame active" data-slide="1" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-01.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Cover</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e24 100%);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .cat-art {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 18px; line-height: 1.2;
+    color: #f0a040; white-space: pre;
+    margin-bottom: 48px; opacity: 0.9;
+  }
+  .title {
+    font-size: 96px; font-weight: 800;
+    background: linear-gradient(90deg, #f0a040, #ff6b6b, #f0a040);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .subtitle {
+    font-size: 32px; color: #8b949e;
+    max-width: 1200px; text-align: center;
+    line-height: 1.5; margin-bottom: 64px;
+  }
+  .team-info {
+    display: flex; gap: 48px; align-items: center;
+    font-size: 24px; color: #58a6ff;
+  }
+  .team-info .divider { color: #30363d; }
+  .github {
+    font-size: 20px; color: #8b949e;
+    position: absolute; bottom: 48px; right: 64px;
+  }
+  .github a { color: #58a6ff; text-decoration: none; }
+  .badge {
+    position: absolute; top: 48px; right: 64px;
+    background: #238636; color: #fff;
+    padding: 8px 20px; border-radius: 20px;
+    font-size: 18px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;badge&quot;>Ralphton Seoul 2026</div>
+  <div class=&quot;cat-art&quot;>
+        ╱╲     ╱╲
+       ╱██╲   ╱██╲
+      ╱████╲_╱████╲
+     ┌──────────────┐
+     │  ◕        ◕  │
+     │      ▼▼      │
+     │  ╱══╗██╔══╲  │
+     └──┬────────┬──┘
+       └──┘    └──┘  ~
+  </div>
+  <div class=&quot;title&quot;>Cat-In-Lattice</div>
+  <div class=&quot;subtitle&quot;>에이전트가 일하는 동안, Ghostty 하단에서 살아 움직이며<br>상태·알림·유희를 제공하는 companion pane</div>
+  <div class=&quot;team-info&quot;>
+    <span>Team NomaDamas</span>
+    <span class=&quot;divider&quot;>|</span>
+    <span>Rust + ratatui + Ouroboros</span>
+  </div>
+  <div class=&quot;github&quot;>github.com/NomaDamas/Cat-In-Lattice</div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+        <iframe class="slide-frame" data-slide="2" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-02.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Problem</title>
+<link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css&quot;>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 100px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+    display: flex; gap: 64px;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+
+  /* Left column — text */
+  .left {
+    flex: 0 0 640px;
+    display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  h1 {
+    font-size: 64px; font-weight: 800;
+    color: #ff6b6b; margin-bottom: 40px;
+  }
+  .context {
+    font-size: 28px; color: #8b949e;
+    margin-bottom: 48px; line-height: 1.6;
+    border-left: 4px solid #30363d;
+    padding-left: 24px;
+  }
+  .pain-list {
+    display: flex; flex-direction: column; gap: 28px;
+  }
+  .pain-item {
+    display: flex; align-items: flex-start; gap: 20px;
+  }
+  .pain-item h3 {
+    font-size: 26px; font-weight: 700;
+    color: #ff6b6b; margin-bottom: 6px;
+  }
+  .pain-item p {
+    font-size: 20px; color: #8b949e; line-height: 1.5;
+  }
+  .pain-icon {
+    flex-shrink: 0; width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    background: rgba(255,107,107,0.08);
+    border-radius: 12px;
+  }
+
+  /* Right column — illustration */
+  .right {
+    flex: 1; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .right img {
+    width: 100%; height: auto;
+  }
+
+  .frequency {
+    position: absolute; bottom: 64px; left: 100px;
+    font-size: 22px; color: #f0a040;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .frequency .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #f0a040; animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;slide-number&quot;>02 / 06</div>
+
+  <!-- Left: text -->
+  <div class=&quot;left&quot;>
+    <h1>Problem</h1>
+    <p class=&quot;context&quot;>
+      이제 IDE가 아닌 터미널로 AI agent를 통해 코딩한다.<br>
+      화면을 쪼개 8개 세션을 동시에 orchestration하기도 한다.
+    </p>
+    <div class=&quot;pain-list&quot;>
+      <div class=&quot;pain-item&quot;>
+        <div class=&quot;pain-icon&quot;>👁️</div>
+        <div>
+          <h3>주의력 분산</h3>
+          <p>8개 터미널 중 어디에 인간의 판단이 필요한지 알아차리기 어렵다.</p>
+        </div>
+      </div>
+      <div class=&quot;pain-item&quot;>
+        <div class=&quot;pain-icon&quot;>⏳</div>
+        <div>
+          <h3>잉여 시간 낭비</h3>
+          <p>에이전트 대기 시간을 활용할 방법이 없다.</p>
+        </div>
+      </div>
+      <div class=&quot;pain-item&quot;>
+        <div class=&quot;pain-icon&quot;>🖥️</div>
+        <div>
+          <h3>삭막한 터미널</h3>
+          <p>텍스트만 흘러가는 공간. 몰입감과 애착이 생기지 않는다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: illustration — 8 terminals + overwhelmed developer -->
+  <div class=&quot;right&quot;>
+    <img alt=&quot;8개 터미널을 동시에 관리하며 혼란스러워하는 개발자&quot; src=&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 800' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='glow' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ff6b6b' stop-opacity='0.15'/%3E%3Cstop offset='1' stop-color='%23ff6b6b' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3C!-- Background glow --%3E%3Cellipse cx='480' cy='420' rx='440' ry='360' fill='url(%23glow)'/%3E%3C!-- 8 terminal windows: 4x2 grid --%3E%3Cg id='terminals'%3E%3C!-- Row 1 --%3E%3Crect x='60' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='60' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='76' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='92' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='108' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='76' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent...%3C/text%3E%3Ctext x='76' y='142' fill='%2358a6ff' font-size='11' font-family='monospace'%3EThinking...%3C/text%3E%3Ctext x='76' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3Esrc/auth.rs%3C/text%3E%3Ctext x='76' y='174' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%88%3C/text%3E%3Crect x='275' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%23ff6b6b' stroke-width='2'/%3E%3Crect x='275' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='291' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='307' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='323' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='291' y='126' fill='%23ff6b6b' font-family='monospace' font-size='11' font-weight='bold'%3E%E2%9A%A0 Permission needed%3C/text%3E%3Ctext x='291' y='142' fill='%23ff6b6b' font-family='monospace' font-size='11'%3EAllow edit? (y/n)%3C/text%3E%3Ctext x='291' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3EWaiting for input...%3C/text%3E%3Ctext x='291' y='174' fill='%23ff6b6b' font-family='monospace' font-size='11'%3E%E2%96%88%3C/text%3E%3Crect x='490' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='490' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='506' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='522' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='538' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='506' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph run%3C/text%3E%3Ctext x='506' y='142' fill='%2358a6ff' font-size='11' font-family='monospace'%3EBuilding...%3C/text%3E%3Ctext x='506' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%93%E2%96%93%E2%96%93%E2%96%93%E2%96%91%E2%96%91%E2%96%91 57%25%3C/text%3E%3Crect x='705' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='705' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='721' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='737' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='753' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='721' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent%3C/text%3E%3Ctext x='721' y='142' fill='%23484f58' font-family='monospace' font-size='11'%3EWriting tests...%3C/text%3E%3Ctext x='721' y='158' fill='%2327c93f' font-family='monospace' font-size='11'%3E%E2%9C%93 3 passed%3C/text%3E%3C!-- Row 2 --%3E%3Crect x='60' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='60' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='76' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='92' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='108' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='76' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph story-3%3C/text%3E%3Ctext x='76' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3EThinking...%3C/text%3E%3Ctext x='76' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3Elib/parser.rs%3C/text%3E%3Crect x='275' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='275' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='291' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='307' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='323' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='291' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent%3C/text%3E%3Ctext x='291' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3EAnalyzing...%3C/text%3E%3Ctext x='291' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3Eapi/routes.ts%3C/text%3E%3Crect x='490' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%23ff6b6b' stroke-width='2'/%3E%3Crect x='490' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='506' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='522' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='538' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='506' y='286' fill='%23ff6b6b' font-family='monospace' font-size='11' font-weight='bold'%3EERROR: test failed%3C/text%3E%3Ctext x='506' y='302' fill='%23ff6b6b' font-family='monospace' font-size='11'%3E%E2%9C%97 assertion err%3C/text%3E%3Ctext x='506' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3ERetry? (y/n) %E2%96%88%3C/text%3E%3Crect x='705' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='705' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='721' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='737' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='753' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='721' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph run%3C/text%3E%3Ctext x='721' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3ECompiling...%3C/text%3E%3Ctext x='721' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%93%E2%96%93%E2%96%91%E2%96%91%E2%96%91%E2%96%91%E2%96%91 28%25%3C/text%3E%3C/g%3E%3C!-- Developer figure --%3E%3Cg transform='translate(380,460)'%3E%3C!-- Chair --%3E%3Cellipse cx='100' cy='280' rx='80' ry='16' fill='%231c2129'/%3E%3Crect x='60' y='200' width='80' height='80' rx='12' fill='%23222830'/%3E%3Crect x='50' y='140' width='100' height='70' rx='8' fill='%23282e36'/%3E%3C!-- Body --%3E%3Crect x='65' y='120' width='70' height='100' rx='10' fill='%232d333b'/%3E%3C!-- Head --%3E%3Ccircle cx='100' cy='90' r='36' fill='%23d2a679'/%3E%3C!-- Hair --%3E%3Cellipse cx='100' cy='68' rx='34' ry='20' fill='%232d333b'/%3E%3C!-- Eyes — stressed, half-closed --%3E%3Cline x1='82' y1='88' x2='94' y2='88' stroke='%23161b22' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='106' y1='88' x2='118' y2='88' stroke='%23161b22' stroke-width='3' stroke-linecap='round'/%3E%3C!-- Eyebrows — worried --%3E%3Cline x1='80' y1='78' x2='96' y2='82' stroke='%23161b22' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='120' y1='78' x2='104' y2='82' stroke='%23161b22' stroke-width='2.5' stroke-linecap='round'/%3E%3C!-- Mouth — slight frown --%3E%3Cpath d='M90 104 Q100 98 110 104' stroke='%23161b22' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C!-- Arms reaching toward screens --%3E%3Cpath d='M65 160 Q30 140 10 100' stroke='%232d333b' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpath d='M135 160 Q170 140 190 100' stroke='%232d333b' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3C!-- Hands --%3E%3Ccircle cx='10' cy='98' r='10' fill='%23d2a679'/%3E%3Ccircle cx='190' cy='98' r='10' fill='%23d2a679'/%3E%3C!-- Question marks floating --%3E%3Ctext x='-30' y='40' fill='%23ff6b6b' font-size='32' font-weight='bold' opacity='0.7'%3E?%3C/text%3E%3Ctext x='200' y='30' fill='%23ff6b6b' font-size='28' font-weight='bold' opacity='0.5'%3E?%3C/text%3E%3Ctext x='160' y='60' fill='%23ff6b6b' font-size='22' font-weight='bold' opacity='0.4'%3E?%3C/text%3E%3Ctext x='-10' y='65' fill='%23ff6b6b' font-size='20' font-weight='bold' opacity='0.35'%3E!%3C/text%3E%3C/g%3E%3C!-- Attention arrows from 2 red-bordered terminals to developer --%3E%3Cpath d='M375 220 Q400 380 440 460' stroke='%23ff6b6b' stroke-width='2' fill='none' stroke-dasharray='6 4' opacity='0.6'/%3E%3Cpath d='M590 380 Q560 430 510 460' stroke='%23ff6b6b' stroke-width='2' fill='none' stroke-dasharray='6 4' opacity='0.6'/%3E%3C!-- Caption --%3E%3Ctext x='480' y='775' fill='%23484f58' font-size='16' font-family='Pretendard, sans-serif' text-anchor='middle'%3E%22%EC%96%B4%EB%94%94 %EB%B4%90%EC%95%BC %ED%95%98%EC%A7%80...?%22%3C/text%3E%3C/svg%3E&quot;>
+  </div>
+
+  <p class=&quot;frequency&quot;>
+    <span class=&quot;dot&quot;></span>
+    하루 수십 번, 매 에이전트 세션마다 반복
+  </p>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+        <iframe class="slide-frame" data-slide="3" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-03.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Solution</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 64px 100px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 56px; font-weight: 800;
+    color: #3fb950; margin-bottom: 8px;
+  }
+  .one-liner {
+    font-size: 24px; color: #8b949e;
+    margin-bottom: 32px;
+  }
+  .main-content {
+    display: flex; gap: 40px; align-items: stretch;
+    height: 500px; margin-bottom: 16px;
+  }
+  /* Left: brick game image */
+  .brick-side {
+    width: 260px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+  }
+  .brick-side img {
+    height: 480px; border-radius: 16px;
+    filter: drop-shadow(0 8px 32px rgba(240,160,64,0.3));
+  }
+  .brick-label {
+    margin-top: 12px; font-size: 16px; color: #484f58;
+    text-align: center;
+  }
+  .arrow-bridge {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; color: #f0a040; flex-shrink: 0;
+    width: 60px;
+  }
+  /* Right: terminal mock */
+  .terminal-side {
+    flex: 1; display: flex; flex-direction: column;
+  }
+  .terminal-window {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 12px; overflow: hidden;
+    flex: 1; display: flex; flex-direction: column;
+  }
+  .terminal-titlebar {
+    background: #161b22; padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .titlebar-text {
+    font-size: 13px; color: #484f58;
+    font-family: 'Fira Code', monospace; margin-left: 8px;
+  }
+  .terminal-body {
+    flex: 1; display: flex; flex-direction: column;
+  }
+  /* Top pane: agent output */
+  .agent-pane {
+    flex: 1; padding: 12px 16px;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px; line-height: 1.5;
+    color: #484f58; border-bottom: 2px solid #f0a040;
+    overflow: hidden;
+  }
+  .agent-pane .prompt { color: #58a6ff; }
+  .agent-pane .output { color: #8b949e; }
+  .agent-pane .success { color: #3fb950; }
+  /* Bottom pane: cat companion */
+  .companion-pane {
+    display: flex; height: 260px;
+  }
+  .cp-cat {
+    width: 260px; padding: 8px 12px;
+    border-right: 1px solid #30363d;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .cp-cat .cat-art {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px; line-height: 1.1;
+    color: #f0a040; white-space: pre;
+  }
+  .cp-cat .stats {
+    font-size: 10px; color: #8b949e; margin-top: 6px;
+  }
+  .cp-banner {
+    flex: 1; padding: 10px 16px;
+    display: flex; gap: 8px;
+  }
+  .mini-game-display {
+    background: #0d1117; border: 1px solid #f0a040;
+    border-radius: 8px; padding: 10px 16px;
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .mini-game-title {
+    font-size: 12px; color: #f0a040; font-weight: 700;
+    font-family: 'Fira Code', monospace;
+    margin-bottom: 6px;
+  }
+  .breakout-art {
+    font-family: 'Fira Code', monospace;
+    font-size: 10px; line-height: 1.2;
+    color: #e6edf3; white-space: pre;
+  }
+  .brk-r { color: #ff6b6b; }
+  .brk-y { color: #febc2e; }
+  .brk-g { color: #3fb950; }
+  .brk-b { color: #58a6ff; }
+  .mini-game-score {
+    font-size: 11px; color: #8b949e;
+    font-family: 'Fira Code', monospace;
+    margin-top: 6px;
+  }
+  .side-panel {
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
+  }
+  .quote-box {
+    background: #0d1117; border: 1px solid #30363d;
+    border-radius: 8px; padding: 10px 14px;
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .quote-box .quote-icon {
+    font-size: 14px; color: #484f58; margin-bottom: 4px;
+  }
+  .quote-box .quote-text {
+    font-size: 12px; color: #8b949e;
+    font-family: 'Pretendard', sans-serif;
+    font-style: italic; line-height: 1.5;
+  }
+  .quote-box .quote-author {
+    font-size: 10px; color: #484f58; margin-top: 6px;
+    text-align: right;
+  }
+  .alert-box {
+    background: #0d1117; border: 1px solid #3fb950;
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .alert-box .alert-title {
+    font-size: 11px; color: #3fb950; font-weight: 700;
+    font-family: 'Fira Code', monospace;
+  }
+  .alert-item {
+    font-size: 10px; color: #8b949e;
+    font-family: 'Fira Code', monospace;
+    line-height: 1.4;
+  }
+  .alert-item .check { color: #3fb950; }
+  .helpbar {
+    background: #21262d;
+    padding: 4px 12px; font-size: 11px;
+    color: #8b949e; font-family: 'Fira Code', monospace;
+  }
+  .pane-label {
+    position: absolute; font-size: 12px; color: #f0a040;
+    font-weight: 700; letter-spacing: 1px;
+  }
+  /* Bottom feature pills */
+  .feature-row {
+    display: flex; gap: 20px; justify-content: center;
+    margin-top: 8px;
+  }
+  .fpill {
+    display: flex; align-items: center; gap: 14px;
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 14px; padding: 18px 24px;
+    flex: 1;
+  }
+  .fpill .icon { font-size: 40px; }
+  .fpill h3 { font-size: 22px; font-weight: 800; color: #e6edf3; margin-bottom: 2px; }
+  .fpill .hook { font-size: 13px; font-weight: 700; color: #f0a040; margin-bottom: 4px; }
+  .fpill p { font-size: 15px; color: #8b949e; }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;slide-number&quot;>03 / 06</div>
+  <h1>Solution: Cat-In-Lattice</h1>
+  <div class=&quot;one-liner&quot;>추억의 벽돌게임기를 터미널 안에 넣었다 — 에이전트 상태 알림 + 타마고치 + 미니게임</div>
+
+  <div class=&quot;main-content&quot;>
+    <!-- Left: Brick Game -->
+    <div class=&quot;brick-side&quot;>
+      <img src=&quot;./assets/brick-game.png&quot; alt=&quot;Brick Game 게임기&quot;>
+      <div class=&quot;brick-label&quot;>추억의 그것</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class=&quot;arrow-bridge&quot;>→</div>
+
+    <!-- Right: Terminal mock -->
+    <div class=&quot;terminal-side&quot;>
+      <div class=&quot;terminal-window&quot;>
+        <div class=&quot;terminal-titlebar&quot;>
+          <div class=&quot;dot dot-red&quot;></div>
+          <div class=&quot;dot dot-yellow&quot;></div>
+          <div class=&quot;dot dot-green&quot;></div>
+          <div class=&quot;titlebar-text&quot;>ghostty — claude code</div>
+        </div>
+        <div class=&quot;terminal-body&quot;>
+          <!-- Agent pane (top) -->
+          <div class=&quot;agent-pane&quot;>
+            <div><span class=&quot;prompt&quot;>$</span> claude --dangerously-skip-permissions</div>
+            <div class=&quot;output&quot;>⠋ Thinking...</div>
+            <div class=&quot;output&quot;>⠋ Building src/app.rs...</div>
+            <div class=&quot;success&quot;>✓ 68 tests passed, 0 warnings</div>
+            <div class=&quot;output&quot;>⠋ Writing src/ui.rs...</div>
+          </div>
+          <!-- Companion pane (bottom) -->
+          <div class=&quot;companion-pane&quot;>
+            <div class=&quot;cp-cat&quot;>
+              <div class=&quot;cat-art&quot;>     ╱╲     ╱╲
+    ╱██╲   ╱██╲
+   ╱████╲_╱████╲
+  ┌──────────────┐
+  │  ≧        ≦  │
+  │      ▼▼      │
+  │  ╱══╗▽▽╔══╲  │
+  └──┬────────┬──┘
+   ┌─┘ ░░░░░░ └─┐
+  │ ░░░░░░░░░░░░ │
+  └─┬──┘    └──┬─┘
+    └──┘    └──┘ ⌠</div>
+              <div class=&quot;stats&quot;>Mood: Happy | Aff: 82</div>
+            </div>
+            <div class=&quot;cp-banner&quot;>
+              <div class=&quot;mini-game-display&quot;>
+                <p class=&quot;mini-game-title&quot;>[4] Breakout</p>
+                <div class=&quot;breakout-art&quot;>████████████████████████████
+<span class=&quot;brk-r&quot;>██████</span> <span class=&quot;brk-y&quot;>██████</span> <span class=&quot;brk-g&quot;>██████</span> <span class=&quot;brk-b&quot;>██████</span>
+<span class=&quot;brk-r&quot;>██████</span> <span class=&quot;brk-y&quot;>██████</span> <span class=&quot;brk-g&quot;>██████</span> <span class=&quot;brk-b&quot;>██████</span>
+<span class=&quot;brk-y&quot;>██████</span> <span class=&quot;brk-g&quot;>██████</span> <span class=&quot;brk-b&quot;>██████</span> <span class=&quot;brk-r&quot;>██████</span>
+<span class=&quot;brk-g&quot;>██████</span> <span class=&quot;brk-b&quot;>██████</span> <span class=&quot;brk-r&quot;>██████</span> <span class=&quot;brk-y&quot;>██████</span>
+
+              ●
+
+
+         ▓▓▓▓▓▓▓▓▓▓▓▓</div>
+                <p class=&quot;mini-game-score&quot;>Score: 2480  Lives: ♥♥♥</p>
+              </div>
+              <div class=&quot;side-panel&quot;>
+                <div class=&quot;quote-box&quot;>
+                  <p class=&quot;quote-icon&quot;>💬</p>
+                  <p class=&quot;quote-text&quot;>&quot;First, solve the problem. Then, write the code.&quot;</p>
+                  <p class=&quot;quote-author&quot;>— John Johnson</p>
+                </div>
+                <div class=&quot;alert-box&quot;>
+                  <p class=&quot;alert-title&quot;>✅ 작업 완료</p>
+                  <p class=&quot;alert-item&quot;><span class=&quot;check&quot;>✓</span> build 완료 — 0 errors</p>
+                  <p class=&quot;alert-item&quot;><span class=&quot;check&quot;>✓</span> 68 tests passed</p>
+                  <p class=&quot;alert-item&quot;><span class=&quot;check&quot;>✓</span> deploy #42 성공</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class=&quot;helpbar&quot;>[P]et [F]eed [1]Pacman [2]Snake [3]Tetris [4]Breakout [H]elp [Q]uit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class=&quot;feature-row&quot;>
+    <div class=&quot;fpill&quot;>
+      <div class=&quot;icon&quot;>🐱</div>
+      <div><p class=&quot;hook&quot;>귀여운!</p><h3>다마고치 고양이</h3><p>친밀도·배고픔 영속, 하루 20회 이벤트</p></div>
+    </div>
+    <div class=&quot;fpill&quot;>
+      <div class=&quot;icon&quot;>📢</div>
+      <div><p class=&quot;hook&quot;>똑똑한!</p><h3>스마트 배너</h3><p>Slack 공지 + 명언 + 에이전트 알림</p></div>
+    </div>
+    <div class=&quot;fpill&quot;>
+      <div class=&quot;icon&quot;>🎮</div>
+      <div><p class=&quot;hook&quot;>재밌다!</p><h3>미니게임 4종</h3><p>대기 시간 킬링타임</p></div>
+    </div>
+    <div class=&quot;fpill&quot;>
+      <div class=&quot;icon&quot;>📐</div>
+      <div><p class=&quot;hook&quot;>간결함!</p><h3>적응형 레이아웃</h3><p>고양이 고정폭 + 리사이즈 대응</p></div>
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+        <iframe class="slide-frame" data-slide="4" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-04.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Ralph Setup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 56px; font-weight: 800;
+    color: #d2a8ff; margin-bottom: 48px;
+  }
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 48px; height: 760px;
+  }
+  .col { display: flex; flex-direction: column; gap: 24px; }
+  .section-title {
+    font-size: 28px; font-weight: 700;
+    color: #d2a8ff; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title .num {
+    background: #d2a8ff; color: #0d1117;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800;
+  }
+  .card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 24px;
+  }
+  .card h3 {
+    font-size: 22px; font-weight: 700;
+    color: #e6edf3; margin-bottom: 8px;
+  }
+  .card p, .card li {
+    font-size: 18px; color: #8b949e; line-height: 1.5;
+  }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 4px; }
+  .highlight { color: #f0a040; font-weight: 600; }
+  .highlight-green { color: #3fb950; font-weight: 600; }
+  .highlight-blue { color: #58a6ff; font-weight: 600; }
+  .iteration-bar {
+    display: flex; gap: 4px; margin-top: 12px;
+  }
+  .iter-dot {
+    flex: 1; height: 32px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #0d1117;
+  }
+  .iter-dot.revise { background: #f0a040; }
+  .iter-dot.pass { background: #3fb950; }
+  .score { font-size: 14px; color: #484f58; margin-top: 4px; text-align: center; }
+  .tech-pills {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+  }
+  .pill {
+    background: #21262d; border: 1px solid #30363d;
+    border-radius: 16px; padding: 6px 16px;
+    font-size: 16px; color: #8b949e;
+  }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;slide-number&quot;>04 / 06</div>
+  <h1>Ralph Setup — 명세 주도 AI 개발</h1>
+
+  <div class=&quot;two-col&quot;>
+    <div class=&quot;col&quot;>
+      <div class=&quot;section-title&quot;><div class=&quot;num&quot;>1</div> Ouroboros 인터뷰 → Seed 명세</div>
+      <div class=&quot;card&quot;>
+        <h3>Socratic Interview <span class=&quot;highlight&quot;>16라운드</span></h3>
+        <ul>
+          <li>구조, 통신, 레이아웃, 고양이 상태, 미니게임, 배너, 배포까지 전부 결정</li>
+          <li>모호도 점수: <span class=&quot;highlight-green&quot;>0.12</span> — 거의 모든 결정이 인터뷰에서 확정</li>
+          <li><span class=&quot;highlight&quot;>22개 acceptance criteria</span>가 담긴 seed.yaml 생성</li>
+        </ul>
+      </div>
+
+      <div class=&quot;section-title&quot;><div class=&quot;num&quot;>2</div> Ralph 루프 — 9 iteration 완성</div>
+      <div class=&quot;card&quot;>
+        <p>QA 점수 추이:</p>
+        <div class=&quot;iteration-bar&quot;>
+          <div class=&quot;iter-dot revise&quot;>1</div>
+          <div class=&quot;iter-dot revise&quot;>2</div>
+          <div class=&quot;iter-dot revise&quot;>3</div>
+          <div class=&quot;iter-dot revise&quot;>4</div>
+          <div class=&quot;iter-dot revise&quot;>5</div>
+          <div class=&quot;iter-dot revise&quot;>6</div>
+          <div class=&quot;iter-dot revise&quot;>7</div>
+          <div class=&quot;iter-dot revise&quot;>8</div>
+          <div class=&quot;iter-dot pass&quot;>9</div>
+        </div>
+        <div class=&quot;score&quot;>0.55 → 0.65 → 0.70 → 0.75 → 0.80 → 0.85 → 0.88 → 0.90 → <strong style=&quot;color:#3fb950&quot;>0.95 PASS</strong></div>
+        <p style=&quot;margin-top: 12px;&quot;>매 iteration: 구현 → QA → git commit+push → 다음 iteration</p>
+      </div>
+      <p style=&quot;font-size: 22px; font-weight: 700; color: #f0a040; margin-top: 16px; line-height: 1.4;&quot;>코드 한 줄 안 치고, 68개 테스트 통과하는 TUI 앱을 완성했습니다.</p>
+    </div>
+
+    <div class=&quot;col&quot;>
+      <div class=&quot;section-title&quot;><div class=&quot;num&quot;>3</div> 기술적 난점 → Agent가 자율 해결</div>
+      <div class=&quot;card&quot;>
+        <h3>SuperLightTUI → Rust 자동 전환</h3>
+        <p>참조 레포가 Rust 라이브러리임을 파악, <span class=&quot;highlight-blue&quot;>프로젝트를 자동으로 Rust로 설정</span></p>
+      </div>
+      <div class=&quot;card&quot;>
+        <h3>tokio → sync 아키텍처 전환</h3>
+        <p>stdin 충돌 문제 발견: crossterm이 stdin을 점유. <span class=&quot;highlight-blue&quot;>tokio 제거하고 std::thread 기반으로 리팩토링</span></p>
+      </div>
+      <div class=&quot;card&quot;>
+        <h3>애니메이션 오버라이드 버그 수정</h3>
+        <p>매 tick마다 mood sync가 transient 애니메이션을 덮어쓰는 문제. <span class=&quot;highlight-blue&quot;>Idle 상태일 때만 mood sync하도록 수정</span></p>
+      </div>
+
+      <div class=&quot;section-title&quot; style=&quot;margin-top: 12px;&quot;><div class=&quot;num&quot;>4</div> 도구 스택</div>
+      <div class=&quot;tech-pills&quot;>
+        <div class=&quot;pill&quot;>Claude Opus 4.6 (1M)</div>
+        <div class=&quot;pill&quot;>Ouroboros Interview</div>
+        <div class=&quot;pill&quot;>Ralph Loop</div>
+        <div class=&quot;pill&quot;>3 병렬 에이전트</div>
+        <div class=&quot;pill&quot;>자동 QA + git push</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+        <iframe class="slide-frame" data-slide="5" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-05.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Progress</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 64px; font-weight: 800;
+    color: #58a6ff; margin-bottom: 48px;
+  }
+  .metrics {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 24px; margin-bottom: 48px;
+  }
+  .metric-card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 32px; text-align: center;
+  }
+  .metric-card .value {
+    font-size: 56px; font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .metric-card .label {
+    font-size: 20px; color: #8b949e;
+  }
+  .value-green { color: #3fb950; }
+  .value-orange { color: #f0a040; }
+  .value-blue { color: #58a6ff; }
+  .value-purple { color: #d2a8ff; }
+  .checklist {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px 48px; margin-bottom: 48px;
+  }
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 24px;
+  }
+  .check-item .icon { font-size: 28px; }
+  .check-done { color: #3fb950; }
+  .check-text { color: #e6edf3; }
+  .next-steps {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 32px;
+  }
+  .done-steps { border-color: #238636; }
+  .done-steps h3 { color: #3fb950; }
+  .next-steps h3 {
+    font-size: 28px; font-weight: 700;
+    color: #58a6ff; margin-bottom: 16px;
+  }
+  .next-steps ul {
+    list-style: none; padding: 0;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .next-steps li {
+    font-size: 20px; color: #8b949e;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .next-steps li::before {
+    content: '→'; color: #58a6ff;
+  }
+  .done-steps li::before {
+    content: '✓'; color: #3fb950;
+  }
+  .done-steps li { color: #3fb950; }
+  .github-cta {
+    position: absolute; bottom: 60px; right: 120px;
+    background: #238636; color: #fff;
+    padding: 16px 32px; border-radius: 12px;
+    font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; gap: 12px;
+  }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;slide-number&quot;>05 / 06</div>
+  <h1>현재 진행 상황</h1>
+
+  <div class=&quot;metrics&quot;>
+    <div class=&quot;metric-card&quot;>
+      <div class=&quot;value value-green&quot;>4,677</div>
+      <div class=&quot;label&quot;>Lines of Rust</div>
+    </div>
+    <div class=&quot;metric-card&quot;>
+      <div class=&quot;value value-orange&quot;>68</div>
+      <div class=&quot;label&quot;>Tests Passed</div>
+    </div>
+    <div class=&quot;metric-card&quot;>
+      <div class=&quot;value value-blue&quot;>3.8MB</div>
+      <div class=&quot;label&quot;>Release Binary</div>
+    </div>
+    <div class=&quot;metric-card&quot;>
+      <div class=&quot;value value-purple&quot;>9</div>
+      <div class=&quot;label&quot;>Ralph Iterations</div>
+    </div>
+  </div>
+
+  <div class=&quot;checklist&quot;>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>픽셀아트 고양이 — 5 무드, 4 idle 프레임, 4 악세사리</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>다마고치 영속성 — JSON 저장, 세션 간 유지</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>배너 시스템 — Slack + 56 명언 + 에이전트 알림</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>미니게임 4종 — Pacman, Snake, Tetris, Breakout</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>적응형 레이아웃 — 2/3패널, 리사이즈 대응</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>Zero warnings, Zero clippy lints</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>GitHub Actions CI (ubuntu + macos)</div>
+    </div>
+    <div class=&quot;check-item&quot;>
+      <div class=&quot;icon check-done&quot;>✓</div>
+      <div class=&quot;check-text&quot;>Homebrew formula + README + MIT LICENSE</div>
+    </div>
+  </div>
+
+  <div class=&quot;next-steps done-steps&quot;>
+    <h3>Done</h3>
+    <ul>
+      <li>Ghostty split pane 실제 통합 테스트</li>
+      <li>Homebrew tap 배포</li>
+      <li>커스텀 캐릭터 스킨 지원</li>
+    </ul>
+  </div>
+
+  <div class=&quot;github-cta&quot;>
+    ★ github.com/NomaDamas/Cat-In-Lattice
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+        <iframe class="slide-frame" data-slide="6" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ko&quot;>
+<head>
+<base href=&quot;./&quot;>
+<script>
+(() => {
+  const slideFile = &quot;slide-06.html&quot;;
+  const localAssetPrefix = &quot;./assets/&quot;;
+  const absolutePathRe = /^(file:\/\/|\/Users\/|\/home\/|\/var\/|\/tmp\/|\/private\/|\/Volumes\/|[A-Za-z]:[\\/]|\\\\)/i;
+  const prefix = '[slides-grab:image]';
+
+  function describeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
+    if (element === document.body) return 'body';
+
+    const parts = [];
+    let current = element;
+    while (current &amp;&amp; current.nodeType === Node.ELEMENT_NODE &amp;&amp; current !== document.body) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) {
+        part += '#' + current.id;
+        parts.unshift(part);
+        break;
+      }
+      if (current.classList.length > 0) {
+        part += '.' + Array.from(current.classList).slice(0, 2).join('.');
+      }
+      parts.unshift(part);
+      current = current.parentElement;
+    }
+    return 'body > ' + parts.join(' > ');
+  }
+
+  function warn(message, detail) {
+    console.warn(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  function fail(message, detail) {
+    console.error(prefix + ' ' + slideFile + ': ' + message, detail);
+  }
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    const src = (target.getAttribute('src') || target.currentSrc || '').trim();
+    if (!src || src.startsWith('data:')) return;
+    if (src.startsWith(localAssetPrefix)) {
+      fail('missing local asset', { src });
+      return;
+    }
+    fail('image failed to load', { src });
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (const image of document.querySelectorAll('img[src]')) {
+      const src = (image.getAttribute('src') || '').trim();
+      if (!src || src.startsWith('data:')) continue;
+      if (src.startsWith('https://')) {
+        fail('remote image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (src.startsWith('http://')) {
+        fail('remote http:// image URL is unsupported in saved slides; download it into ./assets/<file>', { src });
+        continue;
+      }
+      if (absolutePathRe.test(src) || src.startsWith('/')) {
+        fail('non-portable image path is unsupported', { src });
+        continue;
+      }
+      if (!src.startsWith(localAssetPrefix)) {
+        warn('noncanonical local image path should use ./assets/<file>', { src });
+      }
+    }
+
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element === document.body) continue;
+      const backgroundImage = window.getComputedStyle(element).backgroundImage;
+      if (!backgroundImage || backgroundImage === 'none' || !backgroundImage.includes('url(')) continue;
+      fail('non-body background-image is not supported for slide content', {
+        element: describeElement(element),
+        backgroundImage,
+      });
+    }
+  });
+})();
+</script>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=1920,height=1080&quot;>
+<title>Cat-In-Lattice — Scalability</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 72px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 56px; font-weight: 800;
+    color: #f0a040; margin-bottom: 12px;
+  }
+  .insight {
+    font-size: 26px; color: #8b949e;
+    margin-bottom: 40px; border-left: 4px solid #f0a040;
+    padding-left: 20px; line-height: 1.5;
+  }
+  .insight strong { color: #f0a040; }
+  .roadmap {
+    display: grid; grid-template-columns: 1fr 32px 1fr;
+    gap: 0; height: 680px;
+  }
+  .phase {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 16px; padding: 36px;
+    display: flex; flex-direction: column;
+  }
+  .phase-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .phase-num {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #0d1117;
+  }
+  .phase-title {
+    font-size: 30px; font-weight: 700;
+  }
+  .phase-sub {
+    font-size: 18px; color: #8b949e; margin-bottom: 20px;
+  }
+  .item-list { list-style: none; padding: 0; flex: 1; }
+  .item-list li {
+    font-size: 20px; color: #c9d1d9; line-height: 1.5;
+    padding: 10px 0; border-bottom: 1px solid #21262d;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .item-list li:last-child { border-bottom: none; }
+  .item-list .icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .item-list .highlight { color: #f0a040; font-weight: 600; }
+  .item-list .highlight-green { color: #3fb950; font-weight: 600; }
+  .item-list .highlight-blue { color: #58a6ff; font-weight: 600; }
+  .arrow-col {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .arrow {
+    font-size: 28px; color: #484f58;
+  }
+  .phase-left .phase-num { background: #d2a8ff; }
+  .phase-left .phase-title { color: #d2a8ff; }
+  .phase-right .phase-num { background: #f0a040; }
+  .phase-right .phase-title { color: #f0a040; }
+  .bottom-note {
+    position: absolute; bottom: 48px; left: 120px; right: 120px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .moat {
+    background: #1c2128; border: 1px solid #30363d;
+    border-radius: 8px; padding: 12px 24px;
+    font-size: 18px; color: #8b949e;
+  }
+  .moat strong { color: #ff6b6b; }
+  .transition {
+    font-size: 20px; color: #3fb950; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .item-list-compact li {
+    padding: 6px 0;
+  }
+  .vision-img {
+    margin-top: 12px; flex: 1; display: flex; align-items: flex-end;
+  }
+  .vision-img img {
+    width: 100%; border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+<div class=&quot;slide&quot;>
+  <div class=&quot;slide-number&quot;>06 / 06</div>
+  <h1>Scalability</h1>
+  <div class=&quot;insight&quot;>
+    에이전트가 8개 세션을 돌리는 동안, 사람이 실제로 보는 건 이 작은 pane 뿐.<br>
+    <strong>&quot;터미널의 잉여 공간&quot;이 아니라 &quot;에이전트 시대에 인간의 시선이 유일하게 머무는 공간&quot;</strong>
+  </div>
+
+  <div class=&quot;roadmap&quot;>
+    <div class=&quot;phase phase-left&quot;>
+      <div class=&quot;phase-header&quot;>
+        <div class=&quot;phase-num&quot;>1</div>
+        <div class=&quot;phase-title&quot;>멀티 에이전트 관제탑</div>
+      </div>
+      <div class=&quot;phase-sub&quot;>개인 도구 → 없으면 불편한 도구</div>
+      <ul class=&quot;item-list&quot;>
+        <li>
+          <div class=&quot;icon&quot;>📡</div>
+          <div><span class=&quot;highlight&quot;>8개 세션 통합 대시보드</span> — 어떤 세션이 블로킹됐는지, 어디에 사람이 필요한지 한눈에</div>
+        </li>
+        <li>
+          <div class=&quot;icon&quot;>🔔</div>
+          <div><span class=&quot;highlight&quot;>스마트 알림 라우팅</span> — &quot;3번 세션이 approval 기다리고 있어요&quot; → 고양이가 알려줌</div>
+        </li>
+        <li>
+          <div class=&quot;icon&quot;>🎯</div>
+          <div><span class=&quot;highlight&quot;>세션 간 우선순위</span> — 긴급 에러 하이라이트, 자동 포커스 유도</div>
+        </li>
+        <li>
+          <div class=&quot;icon&quot;>📊</div>
+          <div><span class=&quot;highlight-green&quot;>에이전트 fleet 효율</span> — 세션별 진행률, 병목 시각화</div>
+        </li>
+      </ul>
+      <div class=&quot;vision-img&quot;>
+        <img src=&quot;./assets/control-tower-vision.svg&quot; alt=&quot;8개 에이전트 세션을 모니터링하는 고양이 관제탑 대시보드&quot; />
+      </div>
+    </div>
+
+    <div class=&quot;arrow-col&quot;>
+      <div class=&quot;arrow&quot;>→</div>
+    </div>
+
+    <div class=&quot;phase phase-right&quot;>
+      <div class=&quot;phase-header&quot;>
+        <div class=&quot;phase-num&quot;>2</div>
+        <div class=&quot;phase-title&quot;>사내 소셜 레이어</div>
+      </div>
+      <div class=&quot;phase-sub&quot;>개인 도구 → 팀이 같이 쓰는 도구 (바이럴 + 리텐션)</div>
+      <ul class=&quot;item-list item-list-compact&quot;>
+        <li>
+          <div class=&quot;icon&quot;>🐱</div>
+          <div><span class=&quot;highlight-blue&quot;>팀원 고양이 방문</span> — 동료의 고양이가 내 pane에 놀러 옴</div>
+        </li>
+        <li>
+          <div class=&quot;icon&quot;>🏆</div>
+          <div><span class=&quot;highlight-blue&quot;>팀 리더보드</span> — 세션 성공률, 고양이 친밀도 랭킹</div>
+        </li>
+        <li>
+          <div class=&quot;icon&quot;>🎉</div>
+          <div><span class=&quot;highlight-blue&quot;>공유 이벤트</span> — 배포 성공 → 파티 모드</div>
+        </li>
+      </ul>
+      <div class=&quot;vision-img&quot;>
+        <img src=&quot;./assets/social-layer-vision.svg&quot; alt=&quot;세 개의 터미널 사이를 오가는 고양이들 — 각자의 터미널, 서로의 고양이&quot; />
+      </div>
+    </div>
+  </div>
+
+  <div class=&quot;bottom-note&quot;>
+    <div class=&quot;moat&quot;>
+      <strong>Moat:</strong> 터미널 네이티브가 이 기능을 넣기 전에 플러그인 생태계로 네트워크 효과 선점
+    </div>
+    <div class=&quot;transition&quot;>
+      재미있는 도구 → 없으면 불편한 도구 → 팀 인프라
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(&quot;.slide&quot;);if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform=&quot;scale(&quot;+sc+&quot;)&quot;;e.style.transformOrigin=&quot;top left&quot;;document.body.style.width=Math.ceil(1920*sc)+&quot;px&quot;;document.body.style.height=Math.ceil(1080*sc)+&quot;px&quot;;document.body.style.overflow=&quot;hidden&quot;;}s();window.addEventListener(&quot;resize&quot;,s);})();</script>
+</body>
+</html>
+" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 6;
+    let current = 1;
+
+    const frames = document.querySelectorAll('.slide-frame');
+    const counter = document.getElementById('counter');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const scaler = document.getElementById('scaler');
+    const viewport = document.getElementById('viewport');
+
+    function goTo(n) {
+      n = Math.max(1, Math.min(TOTAL, n));
+      if (n === current) return;
+      frames[current - 1].classList.remove('active');
+      current = n;
+      frames[current - 1].classList.add('active');
+      counter.textContent = current + ' / ' + TOTAL;
+      btnPrev.disabled = current === 1;
+      btnNext.disabled = current === TOTAL;
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    btnPrev.addEventListener('click', prev);
+    btnNext.addEventListener('click', next);
+    btnPrev.disabled = true;
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === 'Home') { e.preventDefault(); goTo(1); }
+      else if (e.key === 'End') { e.preventDefault(); goTo(TOTAL); }
+      else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    // Fullscreen
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    document.getElementById('btn-fs').addEventListener('click', toggleFullscreen);
+
+    // Auto-scale to fit viewport (95% fit)
+    function rescale() {
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+      const slideW = scaler.offsetWidth;
+      const slideH = scaler.offsetHeight;
+      const scale = Math.min(vw / slideW, vh / slideH) * 0.95;
+      scaler.style.transform = 'scale(' + scale + ')';
+    }
+
+    window.addEventListener('resize', rescale);
+    document.addEventListener('fullscreenchange', () => setTimeout(rescale, 100));
+    rescale();
+  </script>
+</body>
+</html>

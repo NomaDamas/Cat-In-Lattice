@@ -56,6 +56,8 @@
     background: #161b22; border: 1px solid #30363d;
     border-radius: 12px; padding: 32px;
   }
+  .done-steps { border-color: #238636; }
+  .done-steps h3 { color: #3fb950; }
   .next-steps h3 {
     font-size: 28px; font-weight: 700;
     color: #58a6ff; margin-bottom: 16px;
@@ -72,6 +74,10 @@
   .next-steps li::before {
     content: '→'; color: #58a6ff;
   }
+  .done-steps li::before {
+    content: '✓'; color: #3fb950;
+  }
+  .done-steps li { color: #3fb950; }
   .github-cta {
     position: absolute; bottom: 60px; right: 120px;
     background: #238636; color: #fff;
@@ -140,8 +146,8 @@
     </div>
   </div>
 
-  <div class="next-steps">
-    <h3>Next Steps</h3>
+  <div class="next-steps done-steps">
+    <h3>Done</h3>
     <ul>
       <li>Ghostty split pane 실제 통합 테스트</li>
       <li>Homebrew tap 배포</li>

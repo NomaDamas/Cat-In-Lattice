@@ -87,6 +87,15 @@
     font-size: 20px; color: #3fb950; font-weight: 600;
     display: flex; align-items: center; gap: 8px;
   }
+  .item-list-compact li {
+    padding: 6px 0;
+  }
+  .vision-img {
+    margin-top: 12px; flex: 1; display: flex; align-items: flex-end;
+  }
+  .vision-img img {
+    width: 100%; border-radius: 10px;
+  }
 </style>
 </head>
 <body>
@@ -123,6 +132,9 @@
           <div><span class="highlight-green">에이전트 fleet 효율</span> — 세션별 진행률, 병목 시각화</div>
         </li>
       </ul>
+      <div class="vision-img">
+        <img src="./assets/control-tower-vision.svg" alt="8개 에이전트 세션을 모니터링하는 고양이 관제탑 대시보드" />
+      </div>
     </div>
 
     <div class="arrow-col">
@@ -135,24 +147,23 @@
         <div class="phase-title">사내 소셜 레이어</div>
       </div>
       <div class="phase-sub">개인 도구 → 팀이 같이 쓰는 도구 (바이럴 + 리텐션)</div>
-      <ul class="item-list">
+      <ul class="item-list item-list-compact">
         <li>
           <div class="icon">🐱</div>
-          <div><span class="highlight-blue">팀원 고양이 방문</span> — 동료의 고양이가 내 pane에 놀러 옴. 상호작용 가능</div>
+          <div><span class="highlight-blue">팀원 고양이 방문</span> — 동료의 고양이가 내 pane에 놀러 옴</div>
         </li>
         <li>
           <div class="icon">🏆</div>
-          <div><span class="highlight-blue">팀 리더보드</span> — 코딩 세션 성공률, 미니게임 스코어, 고양이 친밀도 랭킹</div>
+          <div><span class="highlight-blue">팀 리더보드</span> — 세션 성공률, 고양이 친밀도 랭킹</div>
         </li>
         <li>
           <div class="icon">🎉</div>
-          <div><span class="highlight-blue">공유 이벤트</span> — 팀 배포 성공 → 모든 고양이 파티 모드</div>
-        </li>
-        <li>
-          <div class="icon">🔗</div>
-          <div><span class="highlight-green">Slack 연동 이미 있음</span> — 팀 기능 확장의 자연스러운 진입점</div>
+          <div><span class="highlight-blue">공유 이벤트</span> — 배포 성공 → 파티 모드</div>
         </li>
       </ul>
+      <div class="vision-img">
+        <img src="./assets/social-layer-vision.svg" alt="세 개의 터미널 사이를 오가는 고양이들 — 각자의 터미널, 서로의 고양이" />
+      </div>
     </div>
   </div>
 

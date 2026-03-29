@@ -4,105 +4,129 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1920,height=1080">
 <title>Cat-In-Lattice — Problem</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1920px; height: 1080px; overflow: hidden; }
   .slide {
     width: 1920px; height: 1080px;
     background: #0d1117;
-    padding: 80px 120px;
+    padding: 80px 100px;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #e6edf3; position: relative;
+    display: flex; gap: 64px;
   }
   .slide-number {
     position: absolute; top: 48px; right: 64px;
     font-size: 18px; color: #484f58;
   }
+
+  /* Left column — text */
+  .left {
+    flex: 0 0 640px;
+    display: flex; flex-direction: column;
+    justify-content: center;
+  }
   h1 {
     font-size: 64px; font-weight: 800;
-    color: #ff6b6b; margin-bottom: 64px;
+    color: #ff6b6b; margin-bottom: 40px;
   }
   .context {
-    font-size: 30px; color: #8b949e;
+    font-size: 28px; color: #8b949e;
     margin-bottom: 48px; line-height: 1.6;
     border-left: 4px solid #30363d;
     padding-left: 24px;
   }
-  .pain-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    gap: 32px; margin-bottom: 48px;
+  .pain-list {
+    display: flex; flex-direction: column; gap: 28px;
   }
-  .pain-card {
-    background: #161b22; border: 1px solid #30363d;
-    border-radius: 16px; padding: 36px;
+  .pain-item {
+    display: flex; align-items: flex-start; gap: 20px;
   }
-  .pain-card .icon {
-    font-size: 48px; margin-bottom: 16px;
+  .pain-item h3 {
+    font-size: 26px; font-weight: 700;
+    color: #ff6b6b; margin-bottom: 6px;
   }
-  .pain-card h3 {
-    font-size: 28px; font-weight: 700;
-    color: #ff6b6b; margin-bottom: 12px;
+  .pain-item p {
+    font-size: 20px; color: #8b949e; line-height: 1.5;
   }
-  .pain-card p {
-    font-size: 22px; color: #8b949e; line-height: 1.5;
+  .pain-icon {
+    flex-shrink: 0; width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    background: rgba(255,107,107,0.08);
+    border-radius: 12px;
   }
+
+  /* Right column — illustration */
+  .right {
+    flex: 1; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .right img {
+    width: 100%; height: auto;
+  }
+
   .frequency {
-    position: absolute; bottom: 80px; left: 120px;
-    font-size: 24px; color: #f0a040;
+    position: absolute; bottom: 64px; left: 100px;
+    font-size: 22px; color: #f0a040;
     display: flex; align-items: center; gap: 12px;
   }
   .frequency .dot {
-    width: 12px; height: 12px; border-radius: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
     background: #f0a040; animation: pulse 1.5s infinite;
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  .terminal-mock {
-    position: absolute; bottom: 60px; right: 120px;
-    background: #0d1117; border: 1px solid #30363d;
-    border-radius: 8px; padding: 16px 24px;
-    font-family: 'Fira Code', monospace;
-    font-size: 16px; color: #484f58;
-    white-space: pre; line-height: 1.4;
-  }
-  .terminal-mock .cursor { color: #58a6ff; }
 </style>
 </head>
 <body>
 <div class="slide">
   <div class="slide-number">02 / 06</div>
-  <h1>Problem</h1>
-  <div class="context">
-    이제 IDE가 아닌 터미널로 AI agent를 통해 코딩한다.<br>
-    화면을 쪼개 8개 세션을 동시에 orchestration하기도 한다.
+
+  <!-- Left: text -->
+  <div class="left">
+    <h1>Problem</h1>
+    <p class="context">
+      이제 IDE가 아닌 터미널로 AI agent를 통해 코딩한다.<br>
+      화면을 쪼개 8개 세션을 동시에 orchestration하기도 한다.
+    </p>
+    <div class="pain-list">
+      <div class="pain-item">
+        <div class="pain-icon">👁️</div>
+        <div>
+          <h3>주의력 분산</h3>
+          <p>8개 터미널 중 어디에 인간의 판단이 필요한지 알아차리기 어렵다.</p>
+        </div>
+      </div>
+      <div class="pain-item">
+        <div class="pain-icon">⏳</div>
+        <div>
+          <h3>잉여 시간 낭비</h3>
+          <p>에이전트 대기 시간을 활용할 방법이 없다.</p>
+        </div>
+      </div>
+      <div class="pain-item">
+        <div class="pain-icon">🖥️</div>
+        <div>
+          <h3>삭막한 터미널</h3>
+          <p>텍스트만 흘러가는 공간. 몰입감과 애착이 생기지 않는다.</p>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="pain-grid">
-    <div class="pain-card">
-      <div class="icon">👁️</div>
-      <h3>주의력 분산</h3>
-      <p>8개 터미널 중 어디에 인간의 판단이 필요한지 알아차리기 어렵다. 중요한 프롬프트를 놓친다.</p>
-    </div>
-    <div class="pain-card">
-      <div class="icon">⏳</div>
-      <h3>잉여 시간 낭비</h3>
-      <p>에이전트 작업 중 대기 시간이 발생하지만, 그 시간을 활용할 방법이 없다.</p>
-    </div>
-    <div class="pain-card">
-      <div class="icon">🖥️</div>
-      <h3>삭막한 터미널</h3>
-      <p>텍스트만 흘러가는 공간. 인간적 요소가 없어 몰입감과 애착이 생기지 않는다.</p>
-    </div>
+
+  <!-- Right: illustration — 8 terminals + overwhelmed developer -->
+  <div class="right">
+    <img alt="8개 터미널을 동시에 관리하며 혼란스러워하는 개발자" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 800' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='glow' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ff6b6b' stop-opacity='0.15'/%3E%3Cstop offset='1' stop-color='%23ff6b6b' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3C!-- Background glow --%3E%3Cellipse cx='480' cy='420' rx='440' ry='360' fill='url(%23glow)'/%3E%3C!-- 8 terminal windows: 4x2 grid --%3E%3Cg id='terminals'%3E%3C!-- Row 1 --%3E%3Crect x='60' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='60' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='76' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='92' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='108' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='76' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent...%3C/text%3E%3Ctext x='76' y='142' fill='%2358a6ff' font-size='11' font-family='monospace'%3EThinking...%3C/text%3E%3Ctext x='76' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3Esrc/auth.rs%3C/text%3E%3Ctext x='76' y='174' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%88%3C/text%3E%3Crect x='275' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%23ff6b6b' stroke-width='2'/%3E%3Crect x='275' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='291' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='307' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='323' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='291' y='126' fill='%23ff6b6b' font-family='monospace' font-size='11' font-weight='bold'%3E%E2%9A%A0 Permission needed%3C/text%3E%3Ctext x='291' y='142' fill='%23ff6b6b' font-family='monospace' font-size='11'%3EAllow edit? (y/n)%3C/text%3E%3Ctext x='291' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3EWaiting for input...%3C/text%3E%3Ctext x='291' y='174' fill='%23ff6b6b' font-family='monospace' font-size='11'%3E%E2%96%88%3C/text%3E%3Crect x='490' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='490' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='506' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='522' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='538' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='506' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph run%3C/text%3E%3Ctext x='506' y='142' fill='%2358a6ff' font-size='11' font-family='monospace'%3EBuilding...%3C/text%3E%3Ctext x='506' y='158' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%93%E2%96%93%E2%96%93%E2%96%93%E2%96%91%E2%96%91%E2%96%91 57%25%3C/text%3E%3Crect x='705' y='80' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='705' y='80' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='721' cy='92' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='737' cy='92' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='753' cy='92' r='5' fill='%2327c93f'/%3E%3Ctext x='721' y='126' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent%3C/text%3E%3Ctext x='721' y='142' fill='%23484f58' font-family='monospace' font-size='11'%3EWriting tests...%3C/text%3E%3Ctext x='721' y='158' fill='%2327c93f' font-family='monospace' font-size='11'%3E%E2%9C%93 3 passed%3C/text%3E%3C!-- Row 2 --%3E%3Crect x='60' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='60' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='76' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='92' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='108' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='76' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph story-3%3C/text%3E%3Ctext x='76' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3EThinking...%3C/text%3E%3Ctext x='76' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3Elib/parser.rs%3C/text%3E%3Crect x='275' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='275' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='291' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='307' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='323' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='291' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 claude agent%3C/text%3E%3Ctext x='291' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3EAnalyzing...%3C/text%3E%3Ctext x='291' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3Eapi/routes.ts%3C/text%3E%3Crect x='490' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%23ff6b6b' stroke-width='2'/%3E%3Crect x='490' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='506' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='522' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='538' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='506' y='286' fill='%23ff6b6b' font-family='monospace' font-size='11' font-weight='bold'%3EERROR: test failed%3C/text%3E%3Ctext x='506' y='302' fill='%23ff6b6b' font-family='monospace' font-size='11'%3E%E2%9C%97 assertion err%3C/text%3E%3Ctext x='506' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3ERetry? (y/n) %E2%96%88%3C/text%3E%3Crect x='705' y='240' width='200' height='140' rx='8' fill='%23161b22' stroke='%2330363d'/%3E%3Crect x='705' y='240' width='200' height='24' rx='8' fill='%231c2129'/%3E%3Ccircle cx='721' cy='252' r='5' fill='%23ff5f56'/%3E%3Ccircle cx='737' cy='252' r='5' fill='%23ffbd2e'/%3E%3Ccircle cx='753' cy='252' r='5' fill='%2327c93f'/%3E%3Ctext x='721' y='286' fill='%23484f58' font-family='monospace' font-size='11'%3E%24 ralph run%3C/text%3E%3Ctext x='721' y='302' fill='%2358a6ff' font-size='11' font-family='monospace'%3ECompiling...%3C/text%3E%3Ctext x='721' y='318' fill='%23484f58' font-family='monospace' font-size='11'%3E%E2%96%93%E2%96%93%E2%96%91%E2%96%91%E2%96%91%E2%96%91%E2%96%91 28%25%3C/text%3E%3C/g%3E%3C!-- Developer figure --%3E%3Cg transform='translate(380,460)'%3E%3C!-- Chair --%3E%3Cellipse cx='100' cy='280' rx='80' ry='16' fill='%231c2129'/%3E%3Crect x='60' y='200' width='80' height='80' rx='12' fill='%23222830'/%3E%3Crect x='50' y='140' width='100' height='70' rx='8' fill='%23282e36'/%3E%3C!-- Body --%3E%3Crect x='65' y='120' width='70' height='100' rx='10' fill='%232d333b'/%3E%3C!-- Head --%3E%3Ccircle cx='100' cy='90' r='36' fill='%23d2a679'/%3E%3C!-- Hair --%3E%3Cellipse cx='100' cy='68' rx='34' ry='20' fill='%232d333b'/%3E%3C!-- Eyes — stressed, half-closed --%3E%3Cline x1='82' y1='88' x2='94' y2='88' stroke='%23161b22' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='106' y1='88' x2='118' y2='88' stroke='%23161b22' stroke-width='3' stroke-linecap='round'/%3E%3C!-- Eyebrows — worried --%3E%3Cline x1='80' y1='78' x2='96' y2='82' stroke='%23161b22' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='120' y1='78' x2='104' y2='82' stroke='%23161b22' stroke-width='2.5' stroke-linecap='round'/%3E%3C!-- Mouth — slight frown --%3E%3Cpath d='M90 104 Q100 98 110 104' stroke='%23161b22' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C!-- Arms reaching toward screens --%3E%3Cpath d='M65 160 Q30 140 10 100' stroke='%232d333b' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpath d='M135 160 Q170 140 190 100' stroke='%232d333b' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3C!-- Hands --%3E%3Ccircle cx='10' cy='98' r='10' fill='%23d2a679'/%3E%3Ccircle cx='190' cy='98' r='10' fill='%23d2a679'/%3E%3C!-- Question marks floating --%3E%3Ctext x='-30' y='40' fill='%23ff6b6b' font-size='32' font-weight='bold' opacity='0.7'%3E?%3C/text%3E%3Ctext x='200' y='30' fill='%23ff6b6b' font-size='28' font-weight='bold' opacity='0.5'%3E?%3C/text%3E%3Ctext x='160' y='60' fill='%23ff6b6b' font-size='22' font-weight='bold' opacity='0.4'%3E?%3C/text%3E%3Ctext x='-10' y='65' fill='%23ff6b6b' font-size='20' font-weight='bold' opacity='0.35'%3E!%3C/text%3E%3C/g%3E%3C!-- Attention arrows from 2 red-bordered terminals to developer --%3E%3Cpath d='M375 220 Q400 380 440 460' stroke='%23ff6b6b' stroke-width='2' fill='none' stroke-dasharray='6 4' opacity='0.6'/%3E%3Cpath d='M590 380 Q560 430 510 460' stroke='%23ff6b6b' stroke-width='2' fill='none' stroke-dasharray='6 4' opacity='0.6'/%3E%3C!-- Caption --%3E%3Ctext x='480' y='775' fill='%23484f58' font-size='16' font-family='Pretendard, sans-serif' text-anchor='middle'%3E%22%EC%96%B4%EB%94%94 %EB%B4%90%EC%95%BC %ED%95%98%EC%A7%80...?%22%3C/text%3E%3C/svg%3E">
   </div>
-  <div class="frequency">
-    <div class="dot"></div>
+
+  <p class="frequency">
+    <span class="dot"></span>
     하루 수십 번, 매 에이전트 세션마다 반복
-  </div>
-  <div class="terminal-mock"><span class="cursor">$</span> claude --dangerously-skip-permissions
-<span style="color:#484f58">Thinking...</span>
-<span style="color:#484f58">Thinking...</span>
-<span style="color:#484f58">(어디 봐야 하지...?)</span></div>
+  </p>
 </div>
 <script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
 </body>
