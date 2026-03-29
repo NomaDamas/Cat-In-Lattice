@@ -1,0 +1,113 @@
+# ═══════════════════════════════════════════════
+#  Cat-In-Lattice — Seed Specification
+#  Generated from interview_20260329_022013
+# ═══════════════════════════════════════════════
+
+goal: >
+  Ghostty 하단 split pane에서 동작하는 독립 TUI companion 프로세스를 구축한다.
+  에이전트(Claude, Codex, OMX 등)의 작업 상태를 범용 stdout/파일 watch로 감지하고,
+  픽셀아트 고양이 캐릭터 + 배너(공지·명언·알림) + 미니게임을 제공하는 최종 프로덕트.
+
+constraints:
+  - Ghostty split pane 독립 TUI 프로세스 (별도 프로세스로 실행)
+  - SuperLightTUI 기반 픽셀아트 렌더링
+  - 범용 stdout/파일 watch 방식 (정규식 패턴 감지) — 특정 에이전트에 종속되지 않음
+  - 화면 높이 1/4~1/3 이내
+  - 고양이 영역은 이미지 깨지지 않게 고정 폭 확보
+  - 적응형 레이아웃 — 터미널 폭 변동에 반응, 리사이즈 대응
+  - Homebrew install로 배포, CLI 한 줄로 실행
+  - GitHub repo 공개 배포
+  - 구현 중 명세 모순 발견 시 자율 판단으로 해결
+
+acceptance_criteria:
+  # 고양이 (Priority 1)
+  - 픽셀아트 고양이 캐릭터 12~15칸 높이 표시
+  - idle 상태에서 편안한 반복 애니메이션 재생
+  - 시간 기반 랜덤 이벤트 ~20회/일 (쓰다듬기, 밥주기 등) — 사용자 타이밍 인터랙션
+  - 이벤트 성공 시 친밀도 상승, 실패/무시 시 싫어하는 리액션
+  - 친밀도 높을 때 확률적 ~3회/일 악세사리 착용 특수 이벤트
+  - 다마고치형 영속성 — 친밀도·배고픔 등 상태를 로컬 파일에 저장, 세션 간 유지
+
+  # 배너 (Priority 1)
+  - Slack pull로 팀/사내 공지 표시 (쉬운 설정)
+  - 로컬 JSON/텍스트 번들에서 명언·insightful 문구 표시
+  - stdout watch로 에이전트 작업 완료 등 알림 표시
+
+  # 레이아웃
+  - 기본 2단 레이아웃: 고양이 | 배너
+  - 게임 진입 시 3단 레이아웃: 고양이 | 게임 | 배너
+  - 모든 UI 상태에서 하단에 조작키·게임 진입법 키 안내 표시
+
+  # 미니게임 (Priority 2)
+  - 팩맨, 지렁이, 테트리스, 벽돌깨기 4종 구현
+  - 에이전트 대기 중 심심풀이 용도 (포커스 전환 방식)
+  - 중앙 영역에서 플레이, 양쪽(고양이·배너) 유지
+
+ontology_schema:
+  name: CatInLattice
+  description: Ghostty companion pane 도메인 모델 — 고양이 상태, 이벤트, 배너, 게임
+  fields:
+    - name: cat_state
+      type: object
+      description: "고양이 상태 (affinity, hunger, mood, accessories, animation_frame)"
+    - name: affinity
+      type: number
+      description: "친밀도 수치 (0~100), 세션 간 영속"
+    - name: hunger
+      type: number
+      description: "배고픔 수치, 시간 경과로 증가"
+    - name: accessories
+      type: array
+      description: "착용 중인 악세사리 목록"
+    - name: events
+      type: array
+      description: "시간 기반 랜덤 이벤트 큐 (쓰다듬기, 밥주기 등)"
+    - name: banner
+      type: object
+      description: "배너 상태 (slack_notices, quotes, agent_alerts)"
+    - name: layout_mode
+      type: string
+      description: "현재 레이아웃 모드 (default: 2-panel, game: 3-panel)"
+    - name: active_game
+      type: string
+      description: "현재 실행 중인 미니게임 (pacman, snake, tetris, breakout, none)"
+    - name: agent_status
+      type: object
+      description: "범용 stdout/파일 watch로 감지된 에이전트 작업 상태"
+
+evaluation_principles:
+  - name: cat_first
+    description: "고양이 캐릭터와 배너가 항상 최우선, 게임은 부가 기능"
+    weight: 0.3
+  - name: pixel_art_quality
+    description: "픽셀아트가 깨지지 않고 깔끔하게 렌더링되어야 함"
+    weight: 0.25
+  - name: adaptive_layout
+    description: "터미널 폭 변동에 깨지지 않는 적응형 레이아웃"
+    weight: 0.2
+  - name: tamagotchi_persistence
+    description: "고양이 상태의 세션 간 영속성이 정상 동작"
+    weight: 0.15
+  - name: zero_friction_install
+    description: "Homebrew install + CLI 한 줄로 즉시 실행 가능"
+    weight: 0.1
+
+exit_conditions:
+  - name: all_features_functional
+    description: "모든 acceptance criteria 충족"
+    criteria: "고양이, 배너, 미니게임 4종, 레이아웃 전환, 영속성 모두 동작"
+  - name: installable
+    description: "Homebrew formula로 설치 및 CLI 실행 가능"
+    criteria: "brew install + 단일 명령어로 companion pane 실행"
+  - name: production_ready
+    description: "GitHub에 공개 배포 가능한 상태"
+    criteria: "README, 에러 없는 실행, 깔끔한 UX"
+
+metadata:
+  interview_id: interview_20260329_022013
+  ambiguity_score: 0.12
+  project_type: greenfield
+  timestamp: "2026-03-29"
+  tech_references:
+    - "https://github.com/subinium/SuperLightTUI (픽셀아트 TUI)"
+    - "https://github.com/jarrodwatts/claude-hud (hooks 참고)"
