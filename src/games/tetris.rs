@@ -123,6 +123,12 @@ pub struct TetrisGame {
     soft_dropping: bool,
 }
 
+impl Default for TetrisGame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TetrisGame {
     pub fn new() -> Self {
         Self {
@@ -143,11 +149,10 @@ impl TetrisGame {
             if ax < 0 || ax >= BOARD_W as i32 || ay >= BOARD_H as i32 {
                 return false;
             }
-            if ay >= 0 {
-                if self.board[ay as usize][ax as usize].is_some() {
+            if ay >= 0
+                && self.board[ay as usize][ax as usize].is_some() {
                     return false;
                 }
-            }
         }
         true
     }
@@ -381,10 +386,10 @@ impl Game for TetrisGame {
         let info_x = area.x + bw + 3;
         if info_x + 10 < area.right() {
             let labels = [
-                format!("Score"),
+                "Score".to_string(),
                 format!("{}", self.score),
-                format!(""),
-                format!("Lines"),
+                String::new(),
+                "Lines".to_string(),
                 format!("{}", self.lines_cleared),
             ];
             let style = Style::default().fg(Color::White);

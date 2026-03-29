@@ -5,21 +5,13 @@ use std::time::{Duration, Instant};
 const CACHE_TTL: Duration = Duration::from_secs(5 * 60);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct SlackConfig {
     pub webhook_url: Option<String>,
     pub channel: Option<String>,
     pub token: Option<String>,
 }
 
-impl Default for SlackConfig {
-    fn default() -> Self {
-        Self {
-            webhook_url: None,
-            channel: None,
-            token: None,
-        }
-    }
-}
 
 impl SlackConfig {
     pub fn is_configured(&self) -> bool {

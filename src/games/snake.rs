@@ -47,6 +47,12 @@ pub struct SnakeGame {
     timer: f64,
 }
 
+impl Default for SnakeGame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SnakeGame {
     pub fn new() -> Self {
         let cx = WIDTH as i32 / 2;

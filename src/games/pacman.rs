@@ -85,6 +85,12 @@ pub struct PacmanGame {
     lives: u32,
 }
 
+impl Default for PacmanGame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PacmanGame {
     pub fn new() -> Self {
         let mut grid = [[EMPTY; MW]; MH];

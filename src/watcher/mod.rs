@@ -142,7 +142,7 @@ pub fn spawn_file_watcher(
     std::thread::spawn(move || {
         let matcher = PatternMatcher::compile(&patterns);
         while let Ok(changed_path) = notify_rx.recv() {
-            if !watch_paths.iter().any(|p| *p == changed_path) {
+            if !watch_paths.contains(&changed_path) {
                 continue;
             }
             if let Ok(content) = std::fs::read_to_string(&changed_path) {

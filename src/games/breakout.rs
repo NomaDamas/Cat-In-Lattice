@@ -26,6 +26,12 @@ pub struct BreakoutGame {
     ball_launched: bool,
 }
 
+impl Default for BreakoutGame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BreakoutGame {
     pub fn new() -> Self {
         let mut g = Self {

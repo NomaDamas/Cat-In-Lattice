@@ -70,9 +70,10 @@ impl Config {
             }
         }
 
-        let mut cfg = Config::default();
-        cfg.data_dir = dir.to_path_buf();
-        cfg
+        Config {
+            data_dir: dir.to_path_buf(),
+            ..Config::default()
+        }
     }
 
     /// Save config to the data directory.
@@ -80,7 +81,7 @@ impl Config {
         self.ensure_data_dir()?;
         let path = Self::config_path(&self.data_dir);
         let json = serde_json::to_string_pretty(self)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+            .map_err(std::io::Error::other)?;
         std::fs::write(path, json)
     }
 }
