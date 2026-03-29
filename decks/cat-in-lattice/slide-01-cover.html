@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Cover</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e24 100%);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .cat-art {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 18px; line-height: 1.2;
+    color: #f0a040; white-space: pre;
+    margin-bottom: 48px; opacity: 0.9;
+  }
+  .title {
+    font-size: 96px; font-weight: 800;
+    background: linear-gradient(90deg, #f0a040, #ff6b6b, #f0a040);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .subtitle {
+    font-size: 32px; color: #8b949e;
+    max-width: 1200px; text-align: center;
+    line-height: 1.5; margin-bottom: 64px;
+  }
+  .team-info {
+    display: flex; gap: 48px; align-items: center;
+    font-size: 24px; color: #58a6ff;
+  }
+  .team-info .divider { color: #30363d; }
+  .github {
+    font-size: 20px; color: #8b949e;
+    position: absolute; bottom: 48px; right: 64px;
+  }
+  .github a { color: #58a6ff; text-decoration: none; }
+  .badge {
+    position: absolute; top: 48px; right: 64px;
+    background: #238636; color: #fff;
+    padding: 8px 20px; border-radius: 20px;
+    font-size: 18px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="badge">Ralphton Seoul 2026</div>
+  <div class="cat-art">
+        ╱╲     ╱╲
+       ╱██╲   ╱██╲
+      ╱████╲_╱████╲
+     ┌──────────────┐
+     │  ◕        ◕  │
+     │      ▼▼      │
+     │  ╱══╗██╔══╲  │
+     └──┬────────┬──┘
+       └──┘    └──┘  ~
+  </div>
+  <div class="title">Cat-In-Lattice</div>
+  <div class="subtitle">에이전트가 일하는 동안, Ghostty 하단에서 살아 움직이며<br>상태·알림·유희를 제공하는 companion pane</div>
+  <div class="team-info">
+    <span>Team NomaDamas</span>
+    <span class="divider">|</span>
+    <span>Rust + ratatui + Ouroboros</span>
+  </div>
+  <div class="github">github.com/NomaDamas/Cat-In-Lattice</div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>

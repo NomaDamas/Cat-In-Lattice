@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Progress</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 64px; font-weight: 800;
+    color: #58a6ff; margin-bottom: 48px;
+  }
+  .metrics {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 24px; margin-bottom: 48px;
+  }
+  .metric-card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 32px; text-align: center;
+  }
+  .metric-card .value {
+    font-size: 56px; font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .metric-card .label {
+    font-size: 20px; color: #8b949e;
+  }
+  .value-green { color: #3fb950; }
+  .value-orange { color: #f0a040; }
+  .value-blue { color: #58a6ff; }
+  .value-purple { color: #d2a8ff; }
+  .checklist {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px 48px; margin-bottom: 48px;
+  }
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 24px;
+  }
+  .check-item .icon { font-size: 28px; }
+  .check-done { color: #3fb950; }
+  .check-text { color: #e6edf3; }
+  .next-steps {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 32px;
+  }
+  .next-steps h3 {
+    font-size: 28px; font-weight: 700;
+    color: #58a6ff; margin-bottom: 16px;
+  }
+  .next-steps ul {
+    list-style: none; padding: 0;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .next-steps li {
+    font-size: 20px; color: #8b949e;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .next-steps li::before {
+    content: '→'; color: #58a6ff;
+  }
+  .github-cta {
+    position: absolute; bottom: 60px; right: 120px;
+    background: #238636; color: #fff;
+    padding: 16px 32px; border-radius: 12px;
+    font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; gap: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-number">05 / 05</div>
+  <h1>현재 진행 상황</h1>
+
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="value value-green">4,677</div>
+      <div class="label">Lines of Rust</div>
+    </div>
+    <div class="metric-card">
+      <div class="value value-orange">68</div>
+      <div class="label">Tests Passed</div>
+    </div>
+    <div class="metric-card">
+      <div class="value value-blue">3.8MB</div>
+      <div class="label">Release Binary</div>
+    </div>
+    <div class="metric-card">
+      <div class="value value-purple">9</div>
+      <div class="label">Ralph Iterations</div>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">픽셀아트 고양이 — 5 무드, 4 idle 프레임, 4 악세사리</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">다마고치 영속성 — JSON 저장, 세션 간 유지</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">배너 시스템 — Slack + 56 명언 + 에이전트 알림</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">미니게임 4종 — Pacman, Snake, Tetris, Breakout</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">적응형 레이아웃 — 2/3패널, 리사이즈 대응</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">Zero warnings, Zero clippy lints</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">GitHub Actions CI (ubuntu + macos)</div>
+    </div>
+    <div class="check-item">
+      <div class="icon check-done">✓</div>
+      <div class="check-text">Homebrew formula + README + MIT LICENSE</div>
+    </div>
+  </div>
+
+  <div class="next-steps">
+    <h3>Next Steps</h3>
+    <ul>
+      <li>Ghostty split pane 실제 통합 테스트</li>
+      <li>Homebrew tap 배포</li>
+      <li>커스텀 캐릭터 스킨 지원</li>
+    </ul>
+  </div>
+
+  <div class="github-cta">
+    ★ github.com/NomaDamas/Cat-In-Lattice
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>

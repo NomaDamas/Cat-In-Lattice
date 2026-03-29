@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Problem</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 64px; font-weight: 800;
+    color: #ff6b6b; margin-bottom: 64px;
+  }
+  .context {
+    font-size: 30px; color: #8b949e;
+    margin-bottom: 48px; line-height: 1.6;
+    border-left: 4px solid #30363d;
+    padding-left: 24px;
+  }
+  .pain-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px; margin-bottom: 48px;
+  }
+  .pain-card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 16px; padding: 36px;
+  }
+  .pain-card .icon {
+    font-size: 48px; margin-bottom: 16px;
+  }
+  .pain-card h3 {
+    font-size: 28px; font-weight: 700;
+    color: #ff6b6b; margin-bottom: 12px;
+  }
+  .pain-card p {
+    font-size: 22px; color: #8b949e; line-height: 1.5;
+  }
+  .frequency {
+    position: absolute; bottom: 80px; left: 120px;
+    font-size: 24px; color: #f0a040;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .frequency .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #f0a040; animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .terminal-mock {
+    position: absolute; bottom: 60px; right: 120px;
+    background: #0d1117; border: 1px solid #30363d;
+    border-radius: 8px; padding: 16px 24px;
+    font-family: 'Fira Code', monospace;
+    font-size: 16px; color: #484f58;
+    white-space: pre; line-height: 1.4;
+  }
+  .terminal-mock .cursor { color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-number">02 / 05</div>
+  <h1>Problem</h1>
+  <div class="context">
+    이제 IDE가 아닌 터미널로 AI agent를 통해 코딩한다.<br>
+    화면을 쪼개 8개 세션을 동시에 orchestration하기도 한다.
+  </div>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="icon">👁️</div>
+      <h3>주의력 분산</h3>
+      <p>8개 터미널 중 어디에 인간의 판단이 필요한지 알아차리기 어렵다. 중요한 프롬프트를 놓친다.</p>
+    </div>
+    <div class="pain-card">
+      <div class="icon">⏳</div>
+      <h3>잉여 시간 낭비</h3>
+      <p>에이전트 작업 중 대기 시간이 발생하지만, 그 시간을 활용할 방법이 없다.</p>
+    </div>
+    <div class="pain-card">
+      <div class="icon">🖥️</div>
+      <h3>삭막한 터미널</h3>
+      <p>텍스트만 흘러가는 공간. 인간적 요소가 없어 몰입감과 애착이 생기지 않는다.</p>
+    </div>
+  </div>
+  <div class="frequency">
+    <div class="dot"></div>
+    하루 수십 번, 매 에이전트 세션마다 반복
+  </div>
+  <div class="terminal-mock"><span class="cursor">$</span> claude --dangerously-skip-permissions
+<span style="color:#484f58">Thinking...</span>
+<span style="color:#484f58">Thinking...</span>
+<span style="color:#484f58">(어디 봐야 하지...?)</span></div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>

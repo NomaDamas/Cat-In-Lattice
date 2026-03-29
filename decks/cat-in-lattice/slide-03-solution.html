@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Solution</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 64px; font-weight: 800;
+    color: #3fb950; margin-bottom: 16px;
+  }
+  .one-liner {
+    font-size: 28px; color: #8b949e;
+    margin-bottom: 48px;
+  }
+  .layout-demo {
+    display: flex; gap: 4px;
+    background: #161b22; border: 2px solid #30363d;
+    border-radius: 12px; overflow: hidden;
+    height: 480px; margin-bottom: 48px;
+  }
+  .panel {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 24px;
+  }
+  .panel-cat {
+    width: 380px; background: #1a1e24;
+    border-right: 1px solid #30363d;
+  }
+  .panel-cat .cat-art {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px; line-height: 1.15;
+    color: #f0a040; white-space: pre;
+    text-align: center;
+  }
+  .panel-cat .stats {
+    margin-top: 16px; font-size: 14px;
+    color: #8b949e; text-align: center;
+  }
+  .panel-banner {
+    flex: 1; background: #0d1117;
+    padding: 32px;
+  }
+  .feature-list {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .feature {
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .feature .icon {
+    font-size: 36px; flex-shrink: 0;
+    width: 48px; text-align: center;
+  }
+  .feature h3 {
+    font-size: 24px; font-weight: 700;
+    color: #e6edf3; margin-bottom: 4px;
+  }
+  .feature p {
+    font-size: 18px; color: #8b949e; line-height: 1.4;
+  }
+  .alert-box {
+    background: #1c2128; border: 1px solid #238636;
+    border-radius: 8px; padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .alert-box .label {
+    font-size: 14px; color: #3fb950;
+    font-weight: 600; margin-bottom: 4px;
+  }
+  .alert-box .msg {
+    font-size: 18px; color: #e6edf3;
+  }
+  .quote-box {
+    background: #1c2128; border: 1px solid #30363d;
+    border-radius: 8px; padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .quote-box .text {
+    font-size: 18px; color: #e6edf3;
+    font-style: italic;
+  }
+  .quote-box .author {
+    font-size: 14px; color: #484f58;
+    margin-top: 8px;
+  }
+  .helpbar {
+    background: #21262d;
+    padding: 8px 16px; font-size: 13px;
+    color: #8b949e; font-family: 'Fira Code', monospace;
+    border-radius: 0 0 10px 10px;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-number">03 / 05</div>
+  <h1>Solution: Cat-In-Lattice</h1>
+  <div class="one-liner">Ghostty split pane 위 픽셀아트 고양이 companion — 상태 알림 + 타마고치 + 미니게임</div>
+
+  <div class="layout-demo">
+    <div class="panel panel-cat">
+      <div class="cat-art">
+        ╱╲     ╱╲
+       ╱██╲   ╱██╲
+      ╱████╲_╱████╲
+     ┌──────────────┐
+     │  ≧        ≦  │
+     │      ▼▼      │
+     │  ╱══╗▽▽╔══╲  │
+     │ │ ═══╝╚═══ │ │
+     └──┬────────┬──┘
+      ┌─┘ ░░░░░░ └─┐
+     ┌┘  ░░░░░░░░  └┐
+     │  ░░░░░░░░░░  │
+     │ ░░░░░░░░░░░░ │
+     └─┬──┘    └──┬─┘
+       └──┘    └──┘ ⌠
+      </div>
+      <div class="stats">
+        Mood: Happy | Aff: 82 | Hun: 15<br>
+        Pets: 47 | Feeds: 23
+      </div>
+    </div>
+    <div class="panel panel-banner">
+      <div class="alert-box">
+        <div class="label">[COMPLETE] Agent Alert</div>
+        <div class="msg">build finished: 68 tests passed, 0 warnings</div>
+      </div>
+      <div class="quote-box">
+        <div class="text">"The best way to predict the future is to invent it."</div>
+        <div class="author">— Alan Kay</div>
+      </div>
+      <div class="alert-box" style="border-color: #58a6ff;">
+        <div class="label" style="color: #58a6ff;">[Slack] Team Notice</div>
+        <div class="msg">내일 11시 디자인 리뷰 미팅 있습니다</div>
+      </div>
+    </div>
+  </div>
+  <div class="helpbar">[P]et  [F]eed  [1]Pacman  [2]Snake  [3]Tetris  [4]Breakout  [H]elp  [Q]uit</div>
+
+  <div class="feature-list" style="margin-top: 32px;">
+    <div class="feature">
+      <div class="icon">🐱</div>
+      <div><h3>다마고치 고양이</h3><p>친밀도·배고픔 영속, 하루 20회 이벤트</p></div>
+    </div>
+    <div class="feature">
+      <div class="icon">📢</div>
+      <div><h3>스마트 배너</h3><p>Slack 공지 + 명언 + 에이전트 알림</p></div>
+    </div>
+    <div class="feature">
+      <div class="icon">🎮</div>
+      <div><h3>미니게임 4종</h3><p>대기 시간 킬링타임 — 포커스 전환</p></div>
+    </div>
+    <div class="feature">
+      <div class="icon">📐</div>
+      <div><h3>적응형 레이아웃</h3><p>고양이 고정폭 + 터미널 리사이즈 대응</p></div>
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>

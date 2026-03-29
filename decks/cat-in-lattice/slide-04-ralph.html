@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Ralph Setup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 80px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 56px; font-weight: 800;
+    color: #d2a8ff; margin-bottom: 48px;
+  }
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 48px; height: 760px;
+  }
+  .col { display: flex; flex-direction: column; gap: 24px; }
+  .section-title {
+    font-size: 28px; font-weight: 700;
+    color: #d2a8ff; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title .num {
+    background: #d2a8ff; color: #0d1117;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800;
+  }
+  .card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 24px;
+  }
+  .card h3 {
+    font-size: 22px; font-weight: 700;
+    color: #e6edf3; margin-bottom: 8px;
+  }
+  .card p, .card li {
+    font-size: 18px; color: #8b949e; line-height: 1.5;
+  }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 4px; }
+  .highlight { color: #f0a040; font-weight: 600; }
+  .highlight-green { color: #3fb950; font-weight: 600; }
+  .highlight-blue { color: #58a6ff; font-weight: 600; }
+  .iteration-bar {
+    display: flex; gap: 4px; margin-top: 12px;
+  }
+  .iter-dot {
+    flex: 1; height: 32px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #0d1117;
+  }
+  .iter-dot.revise { background: #f0a040; }
+  .iter-dot.pass { background: #3fb950; }
+  .score { font-size: 14px; color: #484f58; margin-top: 4px; text-align: center; }
+  .tech-pills {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+  }
+  .pill {
+    background: #21262d; border: 1px solid #30363d;
+    border-radius: 16px; padding: 6px 16px;
+    font-size: 16px; color: #8b949e;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-number">04 / 05</div>
+  <h1>Ralph Setup — 명세 주도 AI 개발</h1>
+
+  <div class="two-col">
+    <div class="col">
+      <div class="section-title"><div class="num">1</div> Ouroboros 인터뷰 → Seed 명세</div>
+      <div class="card">
+        <h3>Socratic Interview <span class="highlight">16라운드</span></h3>
+        <ul>
+          <li>구조, 통신, 레이아웃, 고양이 상태, 미니게임, 배너, 배포까지 전부 결정</li>
+          <li>모호도 점수: <span class="highlight-green">0.12</span> — 거의 모든 결정이 인터뷰에서 확정</li>
+          <li><span class="highlight">22개 acceptance criteria</span>가 담긴 seed.yaml 생성</li>
+        </ul>
+      </div>
+
+      <div class="section-title"><div class="num">2</div> Ralph 루프 — 9 iteration 완성</div>
+      <div class="card">
+        <p>QA 점수 추이:</p>
+        <div class="iteration-bar">
+          <div class="iter-dot revise">1</div>
+          <div class="iter-dot revise">2</div>
+          <div class="iter-dot revise">3</div>
+          <div class="iter-dot revise">4</div>
+          <div class="iter-dot revise">5</div>
+          <div class="iter-dot revise">6</div>
+          <div class="iter-dot revise">7</div>
+          <div class="iter-dot revise">8</div>
+          <div class="iter-dot pass">9</div>
+        </div>
+        <div class="score">0.55 → 0.65 → 0.70 → 0.75 → 0.80 → 0.85 → 0.88 → 0.90 → <strong style="color:#3fb950">0.95 PASS</strong></div>
+        <p style="margin-top: 12px;">매 iteration: 구현 → QA → git commit+push → 다음 iteration</p>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="section-title"><div class="num">3</div> 기술적 난점 → Agent가 자율 해결</div>
+      <div class="card">
+        <h3>SuperLightTUI → Rust 자동 전환</h3>
+        <p>참조 레포가 Rust 라이브러리임을 파악, <span class="highlight-blue">프로젝트를 자동으로 Rust로 설정</span></p>
+      </div>
+      <div class="card">
+        <h3>tokio → sync 아키텍처 전환</h3>
+        <p>stdin 충돌 문제 발견: crossterm이 stdin을 점유. <span class="highlight-blue">tokio 제거하고 std::thread 기반으로 리팩토링</span></p>
+      </div>
+      <div class="card">
+        <h3>애니메이션 오버라이드 버그 수정</h3>
+        <p>매 tick마다 mood sync가 transient 애니메이션을 덮어쓰는 문제. <span class="highlight-blue">Idle 상태일 때만 mood sync하도록 수정</span></p>
+      </div>
+
+      <div class="section-title" style="margin-top: 12px;"><div class="num">4</div> 도구 스택</div>
+      <div class="tech-pills">
+        <div class="pill">Claude Opus 4.6 (1M)</div>
+        <div class="pill">Ouroboros Interview</div>
+        <div class="pill">Ralph Loop</div>
+        <div class="pill">3 병렬 에이전트</div>
+        <div class="pill">자동 QA + git push</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>
