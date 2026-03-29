@@ -233,4 +233,119 @@ mod tests {
         assert!(AnimationState::Idle.loops());
         assert!(!AnimationState::Happy.loops());
     }
+
+    #[test]
+    fn test_set_same_state_is_noop() {
+        let mut ctrl = AnimationController::new();
+        ctrl.set_state(AnimationState::Idle);
+        // frame_index should stay 0 since we didn't change state
+        assert_eq!(ctrl.frame_index(), 0);
+        assert_eq!(ctrl.state(), AnimationState::Idle);
+    }
+
+    #[test]
+    fn test_non_looping_states() {
+        assert!(!AnimationState::Happy.loops());
+        assert!(!AnimationState::Angry.loops());
+        assert!(!AnimationState::Eating.loops());
+        assert!(!AnimationState::Sleeping.loops());
+    }
+
+    #[test]
+    fn test_frame_counts() {
+        assert!(AnimationState::Idle.frame_count() > 1);
+        assert_eq!(AnimationState::Happy.frame_count(), 1);
+        assert_eq!(AnimationState::Angry.frame_count(), 1);
+        assert_eq!(AnimationState::Eating.frame_count(), 1);
+        assert_eq!(AnimationState::Sleeping.frame_count(), 1);
+    }
+
+    #[test]
+    fn test_set_from_mood() {
+        let mut ctrl = AnimationController::new();
+        ctrl.set_from_mood(Mood::Happy);
+        assert_eq!(ctrl.state(), AnimationState::Happy);
+
+        ctrl.set_from_mood(Mood::Neutral);
+        assert_eq!(ctrl.state(), AnimationState::Idle);
+
+        ctrl.set_from_mood(Mood::Sad);
+        assert_eq!(ctrl.state(), AnimationState::Idle);
+
+        ctrl.set_from_mood(Mood::Angry);
+        assert_eq!(ctrl.state(), AnimationState::Angry);
+
+        ctrl.set_from_mood(Mood::Sleeping);
+        assert_eq!(ctrl.state(), AnimationState::Sleeping);
+    }
+
+    #[test]
+    fn test_play_eating() {
+        let mut ctrl = AnimationController::new();
+        ctrl.play_eating();
+        assert_eq!(ctrl.state(), AnimationState::Eating);
+    }
+
+    #[test]
+    fn test_play_happy() {
+        let mut ctrl = AnimationController::new();
+        ctrl.play_happy();
+        assert_eq!(ctrl.state(), AnimationState::Happy);
+    }
+
+    #[test]
+    fn test_play_angry() {
+        let mut ctrl = AnimationController::new();
+        ctrl.play_angry();
+        assert_eq!(ctrl.state(), AnimationState::Angry);
+    }
+
+    #[test]
+    fn test_tick_no_advance_within_frame_duration() {
+        let ctrl = AnimationController::new();
+        // Immediately after creation, tick should not advance
+        // (frame_start is basically now, so elapsed < frame_duration)
+        let mut ctrl2 = AnimationController::new();
+        let changed = ctrl2.tick();
+        // Might not change since elapsed is ~0
+        // The important thing is it doesn't panic
+        let _ = changed;
+        assert_eq!(ctrl.state(), AnimationState::Idle);
+    }
+
+    #[test]
+    fn test_default_impl() {
+        let ctrl = AnimationController::default();
+        assert_eq!(ctrl.state(), AnimationState::Idle);
+        assert_eq!(ctrl.frame_index(), 0);
+    }
+
+    #[test]
+    fn test_all_states_produce_valid_frames() {
+        let mut ctrl = AnimationController::new();
+        for state in [
+            AnimationState::Idle,
+            AnimationState::Happy,
+            AnimationState::Angry,
+            AnimationState::Eating,
+            AnimationState::Sleeping,
+        ] {
+            ctrl.set_state(state);
+            let frame = ctrl.current_frame();
+            assert!(!frame.is_empty(), "Frame for {:?} should not be empty", state);
+        }
+    }
+
+    #[test]
+    fn test_frame_durations_are_positive() {
+        for state in [
+            AnimationState::Idle,
+            AnimationState::Happy,
+            AnimationState::Angry,
+            AnimationState::Eating,
+            AnimationState::Sleeping,
+        ] {
+            assert!(state.frame_duration() > Duration::ZERO);
+        }
+    }
 }

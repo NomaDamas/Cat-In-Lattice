@@ -276,6 +276,10 @@ impl Game for TetrisGame {
     }
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
+        // Guard: skip rendering if area is too small.
+        if area.width < 3 || area.height < 3 {
+            return;
+        }
         let border = Style::default().fg(Color::DarkGray);
         let bw = BOARD_W as u16;
         let bh = BOARD_H as u16;

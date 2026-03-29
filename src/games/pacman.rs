@@ -335,6 +335,10 @@ impl Game for PacmanGame {
     }
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
+        // Guard: skip rendering if area is too small.
+        if area.width < 3 || area.height < 3 {
+            return;
+        }
         let ox = area.x;
         let oy = area.y;
 

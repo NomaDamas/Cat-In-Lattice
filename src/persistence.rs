@@ -45,3 +45,76 @@ impl Persistence {
         std::fs::write(&self.path, json)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cat::state::{Accessory, Mood};
+
+    #[test]
+    fn test_load_missing_file_returns_fresh_state() {
+        let tmp = std::env::temp_dir().join("cil-test-persist-missing");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+
+        let p = Persistence::new(&tmp);
+        let state = p.load();
+        assert_eq!(state.mood, Mood::Neutral);
+        assert!((state.affinity - 50.0).abs() < f64::EPSILON);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_save_load_roundtrip() {
+        let tmp = std::env::temp_dir().join("cil-test-persist-roundtrip");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+
+        let p = Persistence::new(&tmp);
+
+        let mut state = CatState::new();
+        state.affinity = 88.5;
+        state.hunger = 12.0;
+        state.add_accessory(Accessory::Hat);
+        state.total_pets = 42;
+        p.save(&state).unwrap();
+
+        let loaded = p.load();
+        assert!((loaded.affinity - 88.5).abs() < f64::EPSILON);
+        assert!((loaded.hunger - 12.0).abs() < f64::EPSILON);
+        assert_eq!(loaded.total_pets, 42);
+        assert!(loaded.accessories.contains(&Accessory::Hat));
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_load_corrupt_file_returns_fresh_state() {
+        let tmp = std::env::temp_dir().join("cil-test-persist-corrupt");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+
+        std::fs::write(tmp.join(STATE_FILE), "{{not json}}").unwrap();
+
+        let p = Persistence::new(&tmp);
+        let state = p.load();
+        assert_eq!(state.mood, Mood::Neutral);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_save_creates_parent_directory() {
+        let tmp = std::env::temp_dir().join("cil-test-persist-mkdir/nested/deep");
+        let _ = std::fs::remove_dir_all(std::env::temp_dir().join("cil-test-persist-mkdir"));
+
+        let p = Persistence::new(&tmp);
+        let state = CatState::new();
+        p.save(&state).unwrap();
+
+        assert!(tmp.join(STATE_FILE).exists());
+
+        let _ = std::fs::remove_dir_all(std::env::temp_dir().join("cil-test-persist-mkdir"));
+    }
+}

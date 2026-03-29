@@ -167,6 +167,10 @@ impl Game for BreakoutGame {
     }
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
+        // Guard: skip rendering if area is too small.
+        if area.width < 3 || area.height < 3 {
+            return;
+        }
         let border = Style::default().fg(Color::DarkGray);
         let w = WIDTH as u16;
         let h = HEIGHT as u16;

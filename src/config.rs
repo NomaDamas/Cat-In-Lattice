@@ -84,3 +84,74 @@ impl Config {
         std::fs::write(path, json)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_default_config_values() {
+        let cfg = Config::default();
+        assert_eq!(cfg.active_hours, (8, 23));
+        assert_eq!(cfg.events_per_day, 20);
+        assert!(cfg.data_dir.ends_with(".cat-in-lattice"));
+    }
+
+    #[test]
+    fn test_load_missing_file_returns_defaults() {
+        let tmp = std::env::temp_dir().join("cil-test-config-missing");
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(&tmp).unwrap();
+
+        let cfg = Config::load(Some(&tmp));
+        assert_eq!(cfg.active_hours, (8, 23));
+        assert_eq!(cfg.events_per_day, 20);
+        assert_eq!(cfg.data_dir, tmp);
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_save_and_load_roundtrip() {
+        let tmp = std::env::temp_dir().join("cil-test-config-roundtrip");
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(&tmp).unwrap();
+
+        let mut cfg = Config::default();
+        cfg.data_dir = tmp.clone();
+        cfg.events_per_day = 42;
+        cfg.active_hours = (9, 17);
+        cfg.save().unwrap();
+
+        let loaded = Config::load(Some(&tmp));
+        assert_eq!(loaded.events_per_day, 42);
+        assert_eq!(loaded.active_hours, (9, 17));
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_load_corrupt_file_returns_defaults() {
+        let tmp = std::env::temp_dir().join("cil-test-config-corrupt");
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(&tmp).unwrap();
+
+        let path = Config::config_path(&tmp);
+        fs::write(&path, "not valid json {{{{").unwrap();
+
+        let cfg = Config::load(Some(&tmp));
+        // Should fall back to defaults
+        assert_eq!(cfg.active_hours, (8, 23));
+        assert_eq!(cfg.data_dir, tmp);
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_config_path() {
+        let dir = PathBuf::from("/some/dir");
+        let path = Config::config_path(&dir);
+        assert_eq!(path, PathBuf::from("/some/dir/config.json"));
+    }
+}

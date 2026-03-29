@@ -9,7 +9,7 @@ const WIDTH: usize = 30;
 const HEIGHT: usize = 15;
 const MOVE_INTERVAL: f64 = 0.15; // seconds between moves
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Dir {
     Up,
     Down,
@@ -141,6 +141,10 @@ impl Game for SnakeGame {
     }
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
+        // Guard: if the area is too small to draw anything, skip rendering.
+        if area.width < 3 || area.height < 3 {
+            return;
+        }
         // Border
         let border_style = Style::default().fg(Color::DarkGray);
         // top/bottom border
@@ -231,5 +235,121 @@ impl Game for SnakeGame {
 
     fn name(&self) -> &str {
         "Snake"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_initial_state() {
+        let game = SnakeGame::new();
+        assert!(!game.game_over);
+        assert_eq!(game.score, 0);
+        assert_eq!(game.body.len(), 3);
+        assert_eq!(game.dir, Dir::Right);
+    }
+
+    #[test]
+    fn test_initial_food_not_on_body() {
+        let game = SnakeGame::new();
+        assert!(!game.body.contains(&game.food));
+    }
+
+    #[test]
+    fn test_movement_right() {
+        let mut game = SnakeGame::new();
+        let head_before = game.body[0];
+        game.step();
+        if !game.game_over {
+            let head_after = game.body[0];
+            assert_eq!(head_after.0, head_before.0 + 1);
+            assert_eq!(head_after.1, head_before.1);
+        }
+    }
+
+    #[test]
+    fn test_direction_change() {
+        let mut game = SnakeGame::new();
+        game.handle_input(KeyCode::Down);
+        assert_eq!(game.next_dir, Dir::Down);
+    }
+
+    #[test]
+    fn test_cannot_reverse() {
+        let mut game = SnakeGame::new();
+        // Initial direction is Right, so Left should be blocked
+        game.handle_input(KeyCode::Left);
+        assert_eq!(game.next_dir, Dir::Right);
+    }
+
+    #[test]
+    fn test_wall_collision() {
+        let mut game = SnakeGame::new();
+        // Place snake at right edge heading right
+        game.body = vec![(WIDTH as i32 - 1, 5), (WIDTH as i32 - 2, 5), (WIDTH as i32 - 3, 5)];
+        game.dir = Dir::Right;
+        game.next_dir = Dir::Right;
+        game.step();
+        assert!(game.game_over);
+    }
+
+    #[test]
+    fn test_self_collision() {
+        let mut game = SnakeGame::new();
+        // Create a body that will collide with itself
+        game.body = vec![(5, 5), (6, 5), (6, 6), (5, 6), (4, 6), (4, 5)];
+        game.dir = Dir::Up;
+        game.next_dir = Dir::Up;
+        // Head at (5,5), moving up to (5,4), no collision yet
+        // But let's make it collide: head at (5,5) moving left
+        game.dir = Dir::Left;
+        game.next_dir = Dir::Left;
+        game.step();
+        // (4,5) is in the body, so this should be game over
+        assert!(game.game_over);
+    }
+
+    #[test]
+    fn test_update_does_nothing_when_game_over() {
+        let mut game = SnakeGame::new();
+        game.game_over = true;
+        let score_before = game.score;
+        game.update(10.0);
+        assert_eq!(game.score, score_before);
+    }
+
+    #[test]
+    fn test_score_starts_zero() {
+        let game = SnakeGame::new();
+        assert_eq!(game.score(), 0);
+        assert!(!game.is_game_over());
+        assert_eq!(game.name(), "Snake");
+    }
+
+    #[test]
+    fn test_render_small_area_no_panic() {
+        let game = SnakeGame::new();
+        let area = Rect::new(0, 0, 2, 2);
+        let mut buf = Buffer::empty(area);
+        game.render(area, &mut buf);
+        // Should not panic
+    }
+
+    #[test]
+    fn test_dir_opposites() {
+        assert_eq!(Dir::Up.opposite(), Dir::Down);
+        assert_eq!(Dir::Down.opposite(), Dir::Up);
+        assert_eq!(Dir::Left.opposite(), Dir::Right);
+        assert_eq!(Dir::Right.opposite(), Dir::Left);
+    }
+
+    #[test]
+    fn test_dir_deltas() {
+        assert_eq!(Dir::Up.delta(), (0, -1));
+        assert_eq!(Dir::Down.delta(), (0, 1));
+        assert_eq!(Dir::Left.delta(), (-1, 0));
+        assert_eq!(Dir::Right.delta(), (1, 0));
     }
 }
