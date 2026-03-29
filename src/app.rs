@@ -113,12 +113,15 @@ impl App {
             needs_render = true;
         }
 
-        // Sync animation to mood
-        self.animation.set_from_mood(self.cat_state.mood);
-
-        // Advance animation
+        // Advance animation (tick first so transient animations can expire)
         if self.animation.tick() {
             needs_render = true;
+        }
+
+        // Sync animation to mood only when idle (don't override transient animations)
+        use crate::cat::animation::AnimationState;
+        if self.animation.state() == AnimationState::Idle {
+            self.animation.set_from_mood(self.cat_state.mood);
         }
 
         // Advance active game
