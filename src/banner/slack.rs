@@ -59,7 +59,6 @@ pub struct SlackNotifier {
     config: SlackConfig,
     cache: Vec<SlackNotice>,
     last_fetch: Option<Instant>,
-    client: reqwest::Client,
 }
 
 impl SlackNotifier {
@@ -68,13 +67,12 @@ impl SlackNotifier {
             config,
             cache: Vec::new(),
             last_fetch: None,
-            client: reqwest::Client::new(),
         }
     }
 
-    /// Fetch latest notices. Returns cached results if the cache is still fresh.
-    /// Gracefully returns an empty vec when Slack is not configured or the request fails.
-    pub async fn fetch_notices(&mut self) -> Vec<SlackNotice> {
+    /// Fetch latest notices (blocking). Returns cached results if fresh.
+    /// Gracefully returns empty when not configured or on error.
+    pub fn fetch_notices(&mut self) -> Vec<SlackNotice> {
         if !self.config.is_configured() {
             return Vec::new();
         }
@@ -85,20 +83,20 @@ impl SlackNotifier {
             }
         }
 
-        match self.fetch_from_api().await {
+        match self.fetch_from_api() {
             Ok(notices) => {
                 self.cache = notices;
                 self.last_fetch = Some(Instant::now());
             }
             Err(_) => {
-                // On error keep stale cache rather than clearing it
+                // On error keep stale cache
             }
         }
 
         self.cache.clone()
     }
 
-    async fn fetch_from_api(&self) -> Result<Vec<SlackNotice>, SlackError> {
+    fn fetch_from_api(&self) -> Result<Vec<SlackNotice>, SlackError> {
         let token = self
             .config
             .token
@@ -110,27 +108,22 @@ impl SlackNotifier {
             .as_deref()
             .ok_or(SlackError::NotConfigured)?;
 
-        let resp = self
-            .client
-            .get("https://slack.com/api/conversations.history")
-            .bearer_auth(token)
-            .query(&[("channel", channel), ("limit", "10")])
-            .send()
-            .await
+        let resp: SlackHistoryResponse = ureq::get("https://slack.com/api/conversations.history")
+            .set("Authorization", &format!("Bearer {token}"))
+            .query("channel", channel)
+            .query("limit", "10")
+            .call()
+            .map_err(|e| SlackError::Request(e.to_string()))?
+            .into_json()
             .map_err(|e| SlackError::Request(e.to_string()))?;
 
-        let body: SlackHistoryResponse = resp
-            .json()
-            .await
-            .map_err(|e| SlackError::Request(e.to_string()))?;
-
-        if !body.ok {
+        if !resp.ok {
             return Err(SlackError::Api(
-                body.error.unwrap_or_else(|| "unknown error".into()),
+                resp.error.unwrap_or_else(|| "unknown error".into()),
             ));
         }
 
-        let notices = body
+        let notices = resp
             .messages
             .unwrap_or_default()
             .into_iter()
@@ -155,12 +148,12 @@ impl SlackNotifier {
         Ok(notices)
     }
 
-    /// Invalidate the cache so the next fetch_notices call hits the API.
+    /// Invalidate the cache so the next call hits the API.
     pub fn invalidate_cache(&mut self) {
         self.last_fetch = None;
     }
 
-    /// Update configuration at runtime (e.g. after loading settings).
+    /// Update configuration at runtime.
     pub fn update_config(&mut self, config: SlackConfig) {
         self.config = config;
         self.invalidate_cache();

@@ -2,7 +2,7 @@ use super::Game;
 use crossterm::event::KeyCode;
 use rand::Rng;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Style};
 
 const BOARD_W: usize = 10;
@@ -283,28 +283,28 @@ impl Game for TetrisGame {
         // Draw border
         for x in 0..=(bw + 1).min(area.width.saturating_sub(1)) {
             if area.y < area.bottom() {
-                buf.get_mut(area.x + x, area.y).set_char('─').set_style(border);
+                buf[Position::new(area.x + x, area.y)].set_char('─').set_style(border);
             }
             let bot = area.y + bh + 1;
             if bot < area.bottom() {
-                buf.get_mut(area.x + x, bot).set_char('─').set_style(border);
+                buf[Position::new(area.x + x, bot)].set_char('─').set_style(border);
             }
         }
         for y in 0..=(bh + 1).min(area.height.saturating_sub(1)) {
-            buf.get_mut(area.x, area.y + y).set_char('│').set_style(border);
+            buf[Position::new(area.x, area.y + y)].set_char('│').set_style(border);
             let right = area.x + bw + 1;
             if right < area.right() {
-                buf.get_mut(right, area.y + y).set_char('│').set_style(border);
+                buf[Position::new(right, area.y + y)].set_char('│').set_style(border);
             }
         }
-        buf.get_mut(area.x, area.y).set_char('┌').set_style(border);
+        buf[Position::new(area.x, area.y)].set_char('┌').set_style(border);
         if area.x + bw + 1 < area.right() {
-            buf.get_mut(area.x + bw + 1, area.y).set_char('┐').set_style(border);
+            buf[Position::new(area.x + bw + 1, area.y)].set_char('┐').set_style(border);
         }
         if area.y + bh + 1 < area.bottom() {
-            buf.get_mut(area.x, area.y + bh + 1).set_char('└').set_style(border);
+            buf[Position::new(area.x, area.y + bh + 1)].set_char('└').set_style(border);
             if area.x + bw + 1 < area.right() {
-                buf.get_mut(area.x + bw + 1, area.y + bh + 1).set_char('┘').set_style(border);
+                buf[Position::new(area.x + bw + 1, area.y + bh + 1)].set_char('┘').set_style(border);
             }
         }
 
@@ -318,7 +318,7 @@ impl Game for TetrisGame {
                 let py = oy + row as u16;
                 if px < area.right() && py < area.bottom() {
                     if let Some(color) = self.board[row][col] {
-                        buf.get_mut(px, py)
+                        buf[Position::new(px, py)]
                             .set_char('█')
                             .set_style(Style::default().fg(color));
                     }
@@ -333,7 +333,7 @@ impl Game for TetrisGame {
                 let px = ox + ax as u16;
                 let py = oy + ay as u16;
                 if px < area.right() && py < area.bottom() {
-                    buf.get_mut(px, py)
+                    buf[Position::new(px, py)]
                         .set_char('█')
                         .set_style(Style::default().fg(color));
                 }
@@ -363,7 +363,7 @@ impl Game for TetrisGame {
                                 .iter()
                                 .any(|&(cx, cy)| cx == ax && cy == ay);
                             if !already_current {
-                                buf.get_mut(px, py)
+                                buf[Position::new(px, py)]
                                     .set_char('▒')
                                     .set_style(Style::default().fg(Color::DarkGray));
                             }
@@ -390,7 +390,7 @@ impl Game for TetrisGame {
                     for (j, ch) in label.chars().enumerate() {
                         let px = info_x + j as u16;
                         if px < area.right() {
-                            buf.get_mut(px, py).set_char(ch).set_style(style);
+                            buf[Position::new(px, py)].set_char(ch).set_style(style);
                         }
                     }
                 }
@@ -406,7 +406,7 @@ impl Game for TetrisGame {
                 for (i, ch) in msg.chars().enumerate() {
                     let px = start_x + i as u16;
                     if px < area.right() {
-                        buf.get_mut(px, py).set_char(ch).set_style(style);
+                        buf[Position::new(px, py)].set_char(ch).set_style(style);
                     }
                 }
             }

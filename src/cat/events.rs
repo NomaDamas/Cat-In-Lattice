@@ -124,6 +124,7 @@ impl EventScheduler {
     }
 
     /// Check if a given hour is within active hours.
+    #[allow(dead_code)]
     fn is_active_hour(&self, hour: u32) -> bool {
         if self.active_hour_end > self.active_hour_start {
             hour >= self.active_hour_start as u32 && hour < self.active_hour_end as u32

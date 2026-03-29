@@ -13,14 +13,13 @@ path = "src/main.rs"
 [dependencies]
 crossterm = "0.28"
 ratatui = "0.29"
-tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 dirs = "5"
 notify = "7"
-reqwest = { version = "0.12", features = ["json"] }
+ureq = { version = "2", features = ["json"] }
 clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 unicode-width = "0.2"

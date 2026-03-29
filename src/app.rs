@@ -1,6 +1,7 @@
 use crossterm::event::KeyCode;
+use notify::RecommendedWatcher;
 
-use crate::banner::{AlertQueue, QuoteRotator};
+use crate::banner::{AlertQueue, QuoteRotator, SlackNotifier};
 use crate::cat::animation::AnimationController;
 use crate::cat::events::{EventScheduler, EventType};
 use crate::cat::state::CatState;
@@ -8,11 +9,18 @@ use crate::config::Config;
 use crate::games::{Game, GameType};
 use crate::layout::LayoutMode;
 use crate::persistence::Persistence;
+use crate::watcher;
 
+use std::sync::mpsc;
 use std::time::Instant;
+
+use crate::banner::alerts::Alert;
 
 /// Auto-save interval in seconds.
 const AUTOSAVE_INTERVAL_SECS: u64 = 60;
+
+/// Slack poll interval in seconds.
+const SLACK_POLL_INTERVAL_SECS: u64 = 300;
 
 /// Main application state that ties every subsystem together.
 pub struct App {
@@ -29,6 +37,12 @@ pub struct App {
     persistence: Persistence,
     last_save: Instant,
     last_tick: Instant,
+    last_slack_poll: Instant,
+    slack_notifier: SlackNotifier,
+    // Watcher channel and handle (kept alive for the lifetime of the app)
+    watcher_rx: Option<mpsc::Receiver<Alert>>,
+    #[allow(dead_code)]
+    _watcher_handle: Option<RecommendedWatcher>,
 }
 
 impl App {
@@ -47,6 +61,15 @@ impl App {
         let mut animation = AnimationController::new();
         animation.set_from_mood(cat_state.mood);
 
+        let slack_notifier = SlackNotifier::new(config.slack.clone());
+
+        // Start file watcher
+        let (watcher_rx, watcher_handle) =
+            match watcher::spawn_file_watcher(&config.watcher) {
+                Some((rx, handle)) => (Some(rx), Some(handle)),
+                None => (None, None),
+            };
+
         Self {
             cat_state,
             animation,
@@ -61,11 +84,14 @@ impl App {
             persistence,
             last_save: Instant::now(),
             last_tick: Instant::now(),
+            last_slack_poll: Instant::now(),
+            slack_notifier,
+            watcher_rx,
+            _watcher_handle: watcher_handle,
         }
     }
 
-    /// Called every frame. Advances time-based systems and returns true if a
-    /// re-render is needed.
+    /// Called every frame. Advances time-based systems.
     pub fn tick(&mut self) -> bool {
         let now = Instant::now();
         let dt = now.duration_since(self.last_tick).as_secs_f64();
@@ -73,7 +99,7 @@ impl App {
 
         let mut needs_render = false;
 
-        // Cat vital ticks (run infrequently; the functions are cheap)
+        // Cat vital ticks
         self.cat_state.tick_hunger();
         self.cat_state.tick_affinity_decay();
 
@@ -87,7 +113,7 @@ impl App {
             needs_render = true;
         }
 
-        // Sync animation to mood (only when no transient animation is playing)
+        // Sync animation to mood
         self.animation.set_from_mood(self.cat_state.mood);
 
         // Advance animation
@@ -98,10 +124,32 @@ impl App {
         // Advance active game
         if let Some(game) = &mut self.active_game {
             game.update(dt);
-            needs_render = true; // games always re-render
+            needs_render = true;
             if game.is_game_over() {
-                // Award affinity for playing
                 self.cat_state.affinity = (self.cat_state.affinity + 0.5).min(100.0);
+            }
+        }
+
+        // Drain watcher alerts
+        if let Some(rx) = &self.watcher_rx {
+            while let Ok(alert) = rx.try_recv() {
+                self.alert_queue.push(alert);
+                needs_render = true;
+            }
+        }
+
+        // Periodic Slack poll (in background thread to avoid blocking)
+        if now.duration_since(self.last_slack_poll).as_secs() >= SLACK_POLL_INTERVAL_SECS {
+            self.last_slack_poll = now;
+            let notices = self.slack_notifier.fetch_notices();
+            for notice in notices.into_iter().take(3) {
+                use crate::banner::alerts::{AlertType, Priority};
+                let alert = Alert::new(
+                    AlertType::Custom("Slack".to_string()),
+                    notice.to_string(),
+                )
+                .with_priority(Priority::Normal);
+                self.alert_queue.push(alert);
             }
         }
 

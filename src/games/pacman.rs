@@ -2,7 +2,7 @@ use super::Game;
 use crossterm::event::KeyCode;
 use rand::Rng;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Style};
 
 /// Maze dimensions — fits comfortably in ~22x15 terminal cells.
@@ -353,13 +353,13 @@ impl Game for PacmanGame {
                 let cell = self.grid[row][col];
                 match cell {
                     WALL => {
-                        buf.get_mut(px, py).set_char('█').set_style(wall_style);
+                        buf[Position::new(px, py)].set_char('█').set_style(wall_style);
                     }
                     DOT => {
-                        buf.get_mut(px, py).set_char('·').set_style(dot_style);
+                        buf[Position::new(px, py)].set_char('·').set_style(dot_style);
                     }
                     POWER => {
-                        buf.get_mut(px, py).set_char('◉').set_style(power_style);
+                        buf[Position::new(px, py)].set_char('◉').set_style(power_style);
                     }
                     _ => {}
                 }
@@ -378,7 +378,7 @@ impl Game for PacmanGame {
                     Dir::Down => '▼',
                     Dir::None => '◉',
                 };
-                buf.get_mut(px, py).set_char(ch).set_style(pac_style);
+                buf[Position::new(px, py)].set_char(ch).set_style(pac_style);
             }
         }
 
@@ -395,7 +395,7 @@ impl Game for PacmanGame {
                 } else {
                     ('ᗣ', Color::Red)
                 };
-                buf.get_mut(px, py)
+                buf[Position::new(px, py)]
                     .set_char(ch)
                     .set_style(Style::default().fg(color));
             }
@@ -430,7 +430,7 @@ impl Game for PacmanGame {
             for (i, ch) in msg.chars().enumerate() {
                 let px = ox + i as u16;
                 if px < area.right() {
-                    buf.get_mut(px, status_y).set_char(ch).set_style(style);
+                    buf[Position::new(px, status_y)].set_char(ch).set_style(style);
                 }
             }
         }

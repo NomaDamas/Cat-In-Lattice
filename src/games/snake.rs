@@ -2,7 +2,7 @@ use super::Game;
 use crossterm::event::KeyCode;
 use rand::Rng;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Style};
 
 const WIDTH: usize = 30;
@@ -146,30 +146,30 @@ impl Game for SnakeGame {
         // top/bottom border
         for x in 0..=(WIDTH as u16 + 1).min(area.width.saturating_sub(1)) {
             if area.y < area.bottom() {
-                buf.get_mut(area.x + x, area.y).set_char('─').set_style(border_style);
+                buf[Position::new(area.x + x, area.y)].set_char('─').set_style(border_style);
             }
             let bot = area.y + HEIGHT as u16 + 1;
             if bot < area.bottom() {
-                buf.get_mut(area.x + x, bot).set_char('─').set_style(border_style);
+                buf[Position::new(area.x + x, bot)].set_char('─').set_style(border_style);
             }
         }
         for y in 0..=(HEIGHT as u16 + 1).min(area.height.saturating_sub(1)) {
-            buf.get_mut(area.x, area.y + y).set_char('│').set_style(border_style);
+            buf[Position::new(area.x, area.y + y)].set_char('│').set_style(border_style);
             let right = area.x + WIDTH as u16 + 1;
             if right < area.right() {
-                buf.get_mut(right, area.y + y).set_char('│').set_style(border_style);
+                buf[Position::new(right, area.y + y)].set_char('│').set_style(border_style);
             }
         }
         // corners
-        buf.get_mut(area.x, area.y).set_char('┌').set_style(border_style);
+        buf[Position::new(area.x, area.y)].set_char('┌').set_style(border_style);
         if area.x + WIDTH as u16 + 1 < area.right() {
-            buf.get_mut(area.x + WIDTH as u16 + 1, area.y).set_char('┐').set_style(border_style);
+            buf[Position::new(area.x + WIDTH as u16 + 1, area.y)].set_char('┐').set_style(border_style);
         }
         let bot = area.y + HEIGHT as u16 + 1;
         if bot < area.bottom() {
-            buf.get_mut(area.x, bot).set_char('└').set_style(border_style);
+            buf[Position::new(area.x, bot)].set_char('└').set_style(border_style);
             if area.x + WIDTH as u16 + 1 < area.right() {
-                buf.get_mut(area.x + WIDTH as u16 + 1, bot).set_char('┘').set_style(border_style);
+                buf[Position::new(area.x + WIDTH as u16 + 1, bot)].set_char('┘').set_style(border_style);
             }
         }
 
@@ -181,7 +181,7 @@ impl Game for SnakeGame {
         let px = ox + fx as u16;
         let py = oy + fy as u16;
         if px < area.right() && py < area.bottom() {
-            buf.get_mut(px, py)
+            buf[Position::new(px, py)]
                 .set_char('●')
                 .set_style(Style::default().fg(Color::Red));
         }
@@ -193,7 +193,7 @@ impl Game for SnakeGame {
             if px < area.right() && py < area.bottom() {
                 let ch = if i == 0 { '█' } else { '▓' };
                 let color = if i == 0 { Color::Green } else { Color::LightGreen };
-                buf.get_mut(px, py)
+                buf[Position::new(px, py)]
                     .set_char(ch)
                     .set_style(Style::default().fg(color));
             }
@@ -215,7 +215,7 @@ impl Game for SnakeGame {
             for (i, ch) in msg.chars().enumerate() {
                 let px = area.x + i as u16;
                 if px < area.right() {
-                    buf.get_mut(px, score_y).set_char(ch).set_style(style);
+                    buf[Position::new(px, score_y)].set_char(ch).set_style(style);
                 }
             }
         }

@@ -1,7 +1,7 @@
 use super::Game;
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Style};
 
 const WIDTH: usize = 32;
@@ -173,25 +173,25 @@ impl Game for BreakoutGame {
 
         // Border
         for x in 0..=(w + 1).min(area.width.saturating_sub(1)) {
-            buf.get_mut(area.x + x, area.y).set_char('─').set_style(border);
+            buf[Position::new(area.x + x, area.y)].set_char('─').set_style(border);
             if area.y + h + 1 < area.bottom() {
-                buf.get_mut(area.x + x, area.y + h + 1).set_char('─').set_style(border);
+                buf[Position::new(area.x + x, area.y + h + 1)].set_char('─').set_style(border);
             }
         }
         for y in 0..=(h + 1).min(area.height.saturating_sub(1)) {
-            buf.get_mut(area.x, area.y + y).set_char('│').set_style(border);
+            buf[Position::new(area.x, area.y + y)].set_char('│').set_style(border);
             if area.x + w + 1 < area.right() {
-                buf.get_mut(area.x + w + 1, area.y + y).set_char('│').set_style(border);
+                buf[Position::new(area.x + w + 1, area.y + y)].set_char('│').set_style(border);
             }
         }
-        buf.get_mut(area.x, area.y).set_char('┌').set_style(border);
+        buf[Position::new(area.x, area.y)].set_char('┌').set_style(border);
         if area.x + w + 1 < area.right() {
-            buf.get_mut(area.x + w + 1, area.y).set_char('┐').set_style(border);
+            buf[Position::new(area.x + w + 1, area.y)].set_char('┐').set_style(border);
         }
         if area.y + h + 1 < area.bottom() {
-            buf.get_mut(area.x, area.y + h + 1).set_char('└').set_style(border);
+            buf[Position::new(area.x, area.y + h + 1)].set_char('└').set_style(border);
             if area.x + w + 1 < area.right() {
-                buf.get_mut(area.x + w + 1, area.y + h + 1).set_char('┘').set_style(border);
+                buf[Position::new(area.x + w + 1, area.y + h + 1)].set_char('┘').set_style(border);
             }
         }
 
@@ -211,7 +211,7 @@ impl Game for BreakoutGame {
                     let px = ox + (rx + dx) as u16;
                     let py = oy + ry as u16;
                     if px < area.right() && py < area.bottom() {
-                        buf.get_mut(px, py).set_char('█').set_style(style);
+                        buf[Position::new(px, py)].set_char('█').set_style(style);
                     }
                 }
             }
@@ -224,7 +224,7 @@ impl Game for BreakoutGame {
             for dx in 0..PADDLE_W {
                 let px = ox + (self.paddle_x + dx) as u16;
                 if px < area.right() {
-                    buf.get_mut(px, py).set_char('▀').set_style(paddle_style);
+                    buf[Position::new(px, py)].set_char('▀').set_style(paddle_style);
                 }
             }
         }
@@ -233,7 +233,7 @@ impl Game for BreakoutGame {
         let bx = ox + self.ball_x as u16;
         let by = oy + self.ball_y as u16;
         if bx < area.right() && by < area.bottom() {
-            buf.get_mut(bx, by)
+            buf[Position::new(bx, by)]
                 .set_char('●')
                 .set_style(Style::default().fg(Color::White));
         }
@@ -260,7 +260,7 @@ impl Game for BreakoutGame {
             for (i, ch) in msg.chars().enumerate() {
                 let px = area.x + i as u16;
                 if px < area.right() {
-                    buf.get_mut(px, status_y).set_char(ch).set_style(style);
+                    buf[Position::new(px, status_y)].set_char(ch).set_style(style);
                 }
             }
         }

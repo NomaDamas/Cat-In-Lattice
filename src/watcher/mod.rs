@@ -1,15 +1,14 @@
-use crate::banner::alerts::{Alert, AlertQueue, AlertType, Priority};
+use crate::banner::alerts::{Alert, AlertType, Priority};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
+use std::sync::mpsc;
 
 const DEFAULT_PATTERNS: &[&str] = &["done", "error", "complete", "failed"];
 const DEFAULT_PATTERN_SYMBOLS: &[&str] = &["\u{2713}", "\u{2717}"];
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct WatcherConfig {
-    /// Regex patterns to match against stdout lines or file content.
+    /// Regex patterns to match against file content.
     pub patterns: Vec<String>,
     /// File paths to watch for changes.
     pub watch_paths: Vec<PathBuf>,
@@ -35,9 +34,7 @@ impl PatternMatcher {
     pub fn compile(raw: &[String]) -> Self {
         let patterns = raw
             .iter()
-            .filter_map(|p| {
-                regex::Regex::new(&format!("(?i){p}")).ok()
-            })
+            .filter_map(|p| regex::Regex::new(&format!("(?i){p}")).ok())
             .collect();
         Self { patterns }
     }
@@ -85,141 +82,82 @@ fn priority_for(alert_type: &AlertType) -> Priority {
     }
 }
 
-/// Scans a single line of text and pushes an alert if a pattern matches.
-pub fn scan_line(line: &str, matcher: &PatternMatcher, queue: &Arc<Mutex<AlertQueue>>) {
-    if let Some(result) = matcher.find_match(line) {
-        let alert = Alert::new(result.alert_type, format!("{}: {}", result.matched_text, line))
-            .with_priority(result.priority);
-        if let Ok(mut q) = queue.lock() {
-            q.push(alert);
-        }
-    }
-}
-
-/// A channel-based alert sender so watchers can emit alerts without holding the queue lock.
-#[derive(Clone)]
-pub struct AlertSender {
-    tx: mpsc::UnboundedSender<Alert>,
-}
-
-impl AlertSender {
-    pub fn send(&self, alert: Alert) {
-        let _ = self.tx.send(alert);
-    }
-}
-
-/// Spawn a background task that drains alerts from the channel into the queue.
-pub fn spawn_alert_drain(
-    queue: Arc<Mutex<AlertQueue>>,
-) -> (AlertSender, tokio::task::JoinHandle<()>) {
-    let (tx, mut rx) = mpsc::unbounded_channel::<Alert>();
-    let handle = tokio::spawn(async move {
-        while let Some(alert) = rx.recv().await {
-            if let Ok(mut q) = queue.lock() {
-                q.push(alert);
-            }
-        }
-    });
-    (AlertSender { tx }, handle)
-}
-
-/// Spawn the stdout scanner task. Reads lines from the provided reader and scans them.
-pub fn spawn_stdin_watcher(
-    config: WatcherConfig,
-    queue: Arc<Mutex<AlertQueue>>,
-) -> tokio::task::JoinHandle<()> {
-    tokio::spawn(async move {
-        let matcher = PatternMatcher::compile(&config.patterns);
-        let stdin = tokio::io::stdin();
-        let reader = tokio::io::BufReader::new(stdin);
-        use tokio::io::AsyncBufReadExt;
-        let mut lines = reader.lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            scan_line(&line, &matcher, &queue);
-        }
+/// Scans a single line of text and returns an alert if a pattern matches.
+pub fn scan_line_to_alert(line: &str, matcher: &PatternMatcher) -> Option<Alert> {
+    matcher.find_match(line).map(|result| {
+        Alert::new(result.alert_type, format!("{}: {}", result.matched_text, line))
+            .with_priority(result.priority)
     })
 }
 
-/// Spawn the file watcher task. Uses `notify` to observe file changes and read new content.
+/// Spawn a background file watcher thread.
+/// Returns a receiver that yields alerts when watched files change and match patterns.
+/// The watcher handle is returned so the caller can keep it alive.
 pub fn spawn_file_watcher(
-    config: WatcherConfig,
-    queue: Arc<Mutex<AlertQueue>>,
-) -> Option<tokio::task::JoinHandle<()>> {
+    config: &WatcherConfig,
+) -> Option<(mpsc::Receiver<Alert>, RecommendedWatcher)> {
     if config.watch_paths.is_empty() {
         return None;
     }
 
-    let paths = config.watch_paths.clone();
+    let (alert_tx, alert_rx) = mpsc::channel::<Alert>();
     let patterns = config.patterns.clone();
+    let watch_paths = config.watch_paths.clone();
 
-    Some(tokio::spawn(async move {
-        let matcher = PatternMatcher::compile(&patterns);
-        let queue_inner = queue.clone();
+    let (notify_tx, notify_rx) = std::sync::mpsc::channel::<PathBuf>();
 
-        let (tx, mut rx) = mpsc::unbounded_channel::<PathBuf>();
-
-        let _watcher = {
-            let tx = tx.clone();
-            let mut watcher: RecommendedWatcher =
-                match notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
-                    if let Ok(event) = res {
-                        match event.kind {
-                            EventKind::Create(_) | EventKind::Modify(_) => {
-                                for path in event.paths {
-                                    let _ = tx.send(path);
-                                }
-                            }
-                            _ => {}
+    let mut watcher: RecommendedWatcher =
+        match notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
+            if let Ok(event) = res {
+                match event.kind {
+                    EventKind::Create(_) | EventKind::Modify(_) => {
+                        for path in event.paths {
+                            let _ = notify_tx.send(path);
                         }
                     }
-                }) {
-                    Ok(w) => w,
-                    Err(_) => return,
-                };
-
-            for path in &paths {
-                // Watch the parent directory if the file doesn't exist yet
-                let watch_target = if path.exists() {
-                    path.clone()
-                } else if let Some(parent) = path.parent() {
-                    if parent.exists() {
-                        parent.to_path_buf()
-                    } else {
-                        continue;
-                    }
-                } else {
-                    continue;
-                };
-                let _ = watcher.watch(&watch_target, RecursiveMode::NonRecursive);
+                    _ => {}
+                }
             }
-            watcher
+        }) {
+            Ok(w) => w,
+            Err(_) => return None,
         };
 
-        while let Some(changed_path) = rx.recv().await {
-            // Only process paths we care about
-            if !paths.iter().any(|p| *p == changed_path) {
+    for path in &watch_paths {
+        let watch_target = if path.exists() {
+            path.clone()
+        } else if let Some(parent) = path.parent() {
+            if parent.exists() {
+                parent.to_path_buf()
+            } else {
                 continue;
             }
-            if let Ok(content) = tokio::fs::read_to_string(&changed_path).await {
+        } else {
+            continue;
+        };
+        let _ = watcher.watch(&watch_target, RecursiveMode::NonRecursive);
+    }
+
+    // Spawn a thread to process file change notifications
+    std::thread::spawn(move || {
+        let matcher = PatternMatcher::compile(&patterns);
+        while let Ok(changed_path) = notify_rx.recv() {
+            if !watch_paths.iter().any(|p| *p == changed_path) {
+                continue;
+            }
+            if let Ok(content) = std::fs::read_to_string(&changed_path) {
                 for line in content.lines() {
-                    scan_line(line, &matcher, &queue_inner);
+                    if let Some(alert) = scan_line_to_alert(line, &matcher) {
+                        if alert_tx.send(alert).is_err() {
+                            return; // main thread dropped the receiver
+                        }
+                    }
                 }
             }
         }
-    }))
-}
+    });
 
-/// Convenience: spawn both stdin and file watchers with the given config.
-pub fn spawn_all_watchers(
-    config: WatcherConfig,
-    queue: Arc<Mutex<AlertQueue>>,
-) -> Vec<tokio::task::JoinHandle<()>> {
-    let mut handles = Vec::new();
-    handles.push(spawn_stdin_watcher(config.clone(), queue.clone()));
-    if let Some(h) = spawn_file_watcher(config, queue) {
-        handles.push(h);
-    }
-    handles
+    Some((alert_rx, watcher))
 }
 
 #[cfg(test)]
@@ -254,22 +192,18 @@ mod tests {
     }
 
     #[test]
-    fn scan_line_pushes_to_queue() {
-        let queue = Arc::new(Mutex::new(AlertQueue::default()));
+    fn scan_line_returns_alert() {
         let cfg = WatcherConfig::default();
         let matcher = PatternMatcher::compile(&cfg.patterns);
-        scan_line("agent done processing", &matcher, &queue);
-        let mut q = queue.lock().unwrap();
-        assert_eq!(q.len(), 1);
+        let alert = scan_line_to_alert("agent done processing", &matcher);
+        assert!(alert.is_some());
     }
 
     #[test]
     fn scan_line_ignores_non_matching() {
-        let queue = Arc::new(Mutex::new(AlertQueue::default()));
         let cfg = WatcherConfig::default();
         let matcher = PatternMatcher::compile(&cfg.patterns);
-        scan_line("just a regular log line", &matcher, &queue);
-        let mut q = queue.lock().unwrap();
-        assert!(q.is_empty());
+        let alert = scan_line_to_alert("just a regular log line", &matcher);
+        assert!(alert.is_none());
     }
 }
