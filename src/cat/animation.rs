@@ -150,9 +150,7 @@ impl AnimationController {
     /// Get the raw art frame for the current animation state and frame index.
     pub fn current_frame(&self) -> &'static [&'static str] {
         match self.state {
-            AnimationState::Idle => {
-                art::IDLE_FRAMES[self.frame_index % art::IDLE_FRAMES.len()]
-            }
+            AnimationState::Idle => art::IDLE_FRAMES[self.frame_index % art::IDLE_FRAMES.len()],
             AnimationState::Happy => art::HAPPY,
             AnimationState::Angry => art::ANGRY,
             AnimationState::Eating => art::EATING,
@@ -332,7 +330,11 @@ mod tests {
         ] {
             ctrl.set_state(state);
             let frame = ctrl.current_frame();
-            assert!(!frame.is_empty(), "Frame for {:?} should not be empty", state);
+            assert!(
+                !frame.is_empty(),
+                "Frame for {:?} should not be empty",
+                state
+            );
         }
     }
 

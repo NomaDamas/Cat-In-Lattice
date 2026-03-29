@@ -1,4 +1,4 @@
-use super::Game;
+use super::{Game, GameHud, GameLives, GameRecord};
 use crossterm::event::KeyCode;
 use rand::Rng;
 use ratatui::buffer::Buffer;
@@ -363,13 +363,19 @@ impl Game for PacmanGame {
                 let cell = self.grid[row][col];
                 match cell {
                     WALL => {
-                        buf[Position::new(px, py)].set_char('█').set_style(wall_style);
+                        buf[Position::new(px, py)]
+                            .set_char('█')
+                            .set_style(wall_style);
                     }
                     DOT => {
-                        buf[Position::new(px, py)].set_char('·').set_style(dot_style);
+                        buf[Position::new(px, py)]
+                            .set_char('·')
+                            .set_style(dot_style);
                     }
                     POWER => {
-                        buf[Position::new(px, py)].set_char('◉').set_style(power_style);
+                        buf[Position::new(px, py)]
+                            .set_char('◉')
+                            .set_style(power_style);
                     }
                     _ => {}
                 }
@@ -440,7 +446,9 @@ impl Game for PacmanGame {
             for (i, ch) in msg.chars().enumerate() {
                 let px = ox + i as u16;
                 if px < area.right() {
-                    buf[Position::new(px, status_y)].set_char(ch).set_style(style);
+                    buf[Position::new(px, status_y)]
+                        .set_char(ch)
+                        .set_style(style);
                 }
             }
         }
@@ -456,5 +464,44 @@ impl Game for PacmanGame {
 
     fn name(&self) -> &str {
         "Pacman"
+    }
+
+    fn hud(&self) -> GameHud {
+        let mut details = Vec::new();
+        if self.game_over {
+            details.push("Press R to restart or Esc to close".to_string());
+        } else if self.power_timer > 0.0 {
+            details.push("Power pellet active".to_string());
+        } else {
+            details.push(format!("{} dot(s) left", self.dots_left));
+        }
+
+        GameHud {
+            score: self.score,
+            lives: Some(GameLives::new(self.lives, 3)),
+            status: Some(if self.game_over {
+                if self.won {
+                    "YOU WIN".to_string()
+                } else {
+                    "GAME OVER".to_string()
+                }
+            } else if self.power_timer > 0.0 {
+                "POWER MODE".to_string()
+            } else {
+                "CLEAR THE MAZE".to_string()
+            }),
+            details,
+        }
+    }
+
+    fn record(&self) -> GameRecord {
+        let outcome = if self.won {
+            "Win"
+        } else if self.game_over {
+            "Game Over"
+        } else {
+            "Quit"
+        };
+        GameRecord::new(self.name(), self.score, outcome)
     }
 }

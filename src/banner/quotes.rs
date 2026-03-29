@@ -27,7 +27,10 @@ impl QuoteRotator {
     pub fn new() -> Self {
         let quotes: Vec<Quote> =
             serde_json::from_str(QUOTES_JSON).expect("bundled quotes.json must be valid");
-        assert!(!quotes.is_empty(), "quotes.json must contain at least one quote");
+        assert!(
+            !quotes.is_empty(),
+            "quotes.json must contain at least one quote"
+        );
 
         let mut rng = rand::thread_rng();
         let initial_index = (0..quotes.len())

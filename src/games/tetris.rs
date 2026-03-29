@@ -1,4 +1,4 @@
-use super::Game;
+use super::{Game, GameHud, GameRecord};
 use crossterm::event::KeyCode;
 use rand::Rng;
 use ratatui::buffer::Buffer;
@@ -149,10 +149,9 @@ impl TetrisGame {
             if ax < 0 || ax >= BOARD_W as i32 || ay >= BOARD_H as i32 {
                 return false;
             }
-            if ay >= 0
-                && self.board[ay as usize][ax as usize].is_some() {
-                    return false;
-                }
+            if ay >= 0 && self.board[ay as usize][ax as usize].is_some() {
+                return false;
+            }
         }
         true
     }
@@ -292,28 +291,44 @@ impl Game for TetrisGame {
         // Draw border
         for x in 0..=(bw + 1).min(area.width.saturating_sub(1)) {
             if area.y < area.bottom() {
-                buf[Position::new(area.x + x, area.y)].set_char('─').set_style(border);
+                buf[Position::new(area.x + x, area.y)]
+                    .set_char('─')
+                    .set_style(border);
             }
             let bot = area.y + bh + 1;
             if bot < area.bottom() {
-                buf[Position::new(area.x + x, bot)].set_char('─').set_style(border);
+                buf[Position::new(area.x + x, bot)]
+                    .set_char('─')
+                    .set_style(border);
             }
         }
         for y in 0..=(bh + 1).min(area.height.saturating_sub(1)) {
-            buf[Position::new(area.x, area.y + y)].set_char('│').set_style(border);
+            buf[Position::new(area.x, area.y + y)]
+                .set_char('│')
+                .set_style(border);
             let right = area.x + bw + 1;
             if right < area.right() {
-                buf[Position::new(right, area.y + y)].set_char('│').set_style(border);
+                buf[Position::new(right, area.y + y)]
+                    .set_char('│')
+                    .set_style(border);
             }
         }
-        buf[Position::new(area.x, area.y)].set_char('┌').set_style(border);
+        buf[Position::new(area.x, area.y)]
+            .set_char('┌')
+            .set_style(border);
         if area.x + bw + 1 < area.right() {
-            buf[Position::new(area.x + bw + 1, area.y)].set_char('┐').set_style(border);
+            buf[Position::new(area.x + bw + 1, area.y)]
+                .set_char('┐')
+                .set_style(border);
         }
         if area.y + bh + 1 < area.bottom() {
-            buf[Position::new(area.x, area.y + bh + 1)].set_char('└').set_style(border);
+            buf[Position::new(area.x, area.y + bh + 1)]
+                .set_char('└')
+                .set_style(border);
             if area.x + bw + 1 < area.right() {
-                buf[Position::new(area.x + bw + 1, area.y + bh + 1)].set_char('┘').set_style(border);
+                buf[Position::new(area.x + bw + 1, area.y + bh + 1)]
+                    .set_char('┘')
+                    .set_style(border);
             }
         }
 
@@ -432,5 +447,30 @@ impl Game for TetrisGame {
 
     fn name(&self) -> &str {
         "Tetris"
+    }
+
+    fn hud(&self) -> GameHud {
+        let mut details = vec![format!("Lines: {}", self.lines_cleared)];
+        if self.game_over {
+            details.push("Press R to restart or Esc to close".to_string());
+        } else {
+            details.push("↑ rotate · Space hard drop".to_string());
+        }
+
+        GameHud {
+            score: self.score,
+            lives: None,
+            status: Some(if self.game_over {
+                "GAME OVER".to_string()
+            } else {
+                "STACK CLEAN".to_string()
+            }),
+            details,
+        }
+    }
+
+    fn record(&self) -> GameRecord {
+        let outcome = if self.game_over { "Game Over" } else { "Quit" };
+        GameRecord::new(self.name(), self.score, outcome)
     }
 }

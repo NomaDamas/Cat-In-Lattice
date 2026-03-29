@@ -26,12 +26,12 @@ pub const IDLE_0: &[&str] = &[
     r"     │  ╱══╗██╔══╲  │    ", // mouth / muzzle
     r"     │ │ ═══╝╚═══ │ │    ", // whiskers
     r"     └──┬────────┬──┘    ", // chin
-    r"      ┌─┘ ░░░░░░ └─┐    ", // neck
-    r"     ┌┘  ░░░░░░░░  └┐   ", // chest
-    r"     │  ░░░░░░░░░░  │   ", // body
-    r"     │ ░░░░░░░░░░░░ │   ", // body
-    r"     └─┬──┘    └──┬─┘   ", // paws
-    r"       └──┘    └──┘  ~  ", // feet + tail curled right
+    r"      ┌─┘ ░░░░░░ └─┐    ",  // neck
+    r"     ┌┘  ░░░░░░░░  └┐   ",  // chest
+    r"     │  ░░░░░░░░░░  │   ",  // body
+    r"     │ ░░░░░░░░░░░░ │   ",  // body
+    r"     └─┬──┘    └──┬─┘   ",  // paws
+    r"       └──┘    └──┘  ~  ",  // feet + tail curled right
 ];
 
 /// Idle frame 1: tail up-right, slight inhale (body wider by 1 char)
