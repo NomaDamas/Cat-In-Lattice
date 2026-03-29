@@ -1,4 +1,4 @@
-use super::Game;
+use super::{Game, GameHud, GameLives, GameRecord};
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Position, Rect};
@@ -132,6 +132,12 @@ impl BreakoutGame {
             }
         }
     }
+
+    fn won(&self) -> bool {
+        self.bricks
+            .iter()
+            .all(|row| row.iter().all(|&brick| !brick))
+    }
 }
 
 impl Game for BreakoutGame {
@@ -160,8 +166,7 @@ impl Game for BreakoutGame {
                 self.paddle_x = (self.paddle_x - PADDLE_SPEED).max(0);
             }
             KeyCode::Right => {
-                self.paddle_x =
-                    (self.paddle_x + PADDLE_SPEED).min(WIDTH as i32 - PADDLE_W);
+                self.paddle_x = (self.paddle_x + PADDLE_SPEED).min(WIDTH as i32 - PADDLE_W);
             }
             KeyCode::Char(' ') | KeyCode::Up => {
                 if !self.ball_launched {
@@ -183,25 +188,41 @@ impl Game for BreakoutGame {
 
         // Border
         for x in 0..=(w + 1).min(area.width.saturating_sub(1)) {
-            buf[Position::new(area.x + x, area.y)].set_char('─').set_style(border);
+            buf[Position::new(area.x + x, area.y)]
+                .set_char('─')
+                .set_style(border);
             if area.y + h + 1 < area.bottom() {
-                buf[Position::new(area.x + x, area.y + h + 1)].set_char('─').set_style(border);
+                buf[Position::new(area.x + x, area.y + h + 1)]
+                    .set_char('─')
+                    .set_style(border);
             }
         }
         for y in 0..=(h + 1).min(area.height.saturating_sub(1)) {
-            buf[Position::new(area.x, area.y + y)].set_char('│').set_style(border);
+            buf[Position::new(area.x, area.y + y)]
+                .set_char('│')
+                .set_style(border);
             if area.x + w + 1 < area.right() {
-                buf[Position::new(area.x + w + 1, area.y + y)].set_char('│').set_style(border);
+                buf[Position::new(area.x + w + 1, area.y + y)]
+                    .set_char('│')
+                    .set_style(border);
             }
         }
-        buf[Position::new(area.x, area.y)].set_char('┌').set_style(border);
+        buf[Position::new(area.x, area.y)]
+            .set_char('┌')
+            .set_style(border);
         if area.x + w + 1 < area.right() {
-            buf[Position::new(area.x + w + 1, area.y)].set_char('┐').set_style(border);
+            buf[Position::new(area.x + w + 1, area.y)]
+                .set_char('┐')
+                .set_style(border);
         }
         if area.y + h + 1 < area.bottom() {
-            buf[Position::new(area.x, area.y + h + 1)].set_char('└').set_style(border);
+            buf[Position::new(area.x, area.y + h + 1)]
+                .set_char('└')
+                .set_style(border);
             if area.x + w + 1 < area.right() {
-                buf[Position::new(area.x + w + 1, area.y + h + 1)].set_char('┘').set_style(border);
+                buf[Position::new(area.x + w + 1, area.y + h + 1)]
+                    .set_char('┘')
+                    .set_style(border);
             }
         }
 
@@ -234,7 +255,9 @@ impl Game for BreakoutGame {
             for dx in 0..PADDLE_W {
                 let px = ox + (self.paddle_x + dx) as u16;
                 if px < area.right() {
-                    buf[Position::new(px, py)].set_char('▀').set_style(paddle_style);
+                    buf[Position::new(px, py)]
+                        .set_char('▀')
+                        .set_style(paddle_style);
                 }
             }
         }
@@ -252,13 +275,16 @@ impl Game for BreakoutGame {
         let status_y = area.y + h + 2;
         if status_y < area.bottom() {
             let msg = if self.game_over {
-                if self.bricks.iter().all(|r| r.iter().all(|&b| !b)) {
+                if self.won() {
                     format!("YOU WIN!  Score: {}", self.score)
                 } else {
                     format!("GAME OVER  Score: {}", self.score)
                 }
             } else if !self.ball_launched {
-                format!("Lives: {}  Score: {}  [SPACE] launch", self.lives, self.score)
+                format!(
+                    "Lives: {}  Score: {}  [SPACE] launch",
+                    self.lives, self.score
+                )
             } else {
                 format!("Lives: {}  Score: {}", self.lives, self.score)
             };
@@ -270,7 +296,9 @@ impl Game for BreakoutGame {
             for (i, ch) in msg.chars().enumerate() {
                 let px = area.x + i as u16;
                 if px < area.right() {
-                    buf[Position::new(px, status_y)].set_char(ch).set_style(style);
+                    buf[Position::new(px, status_y)]
+                        .set_char(ch)
+                        .set_style(style);
                 }
             }
         }
@@ -286,5 +314,51 @@ impl Game for BreakoutGame {
 
     fn name(&self) -> &str {
         "Breakout"
+    }
+
+    fn hud(&self) -> GameHud {
+        let mut details = Vec::new();
+        if self.game_over {
+            details.push("Press R to restart or Esc to close".to_string());
+        } else if !self.ball_launched {
+            details.push("Launch with Space or ↑".to_string());
+        } else {
+            details.push("Break every brick to win".to_string());
+        }
+
+        GameHud {
+            score: self.score,
+            lives: Some(GameLives::new(self.lives, 3)),
+            status: Some(if self.game_over {
+                if self.won() {
+                    "YOU WIN".to_string()
+                } else {
+                    "GAME OVER".to_string()
+                }
+            } else if !self.ball_launched {
+                "READY TO LAUNCH".to_string()
+            } else {
+                format!(
+                    "{} brick(s) left",
+                    self.bricks
+                        .iter()
+                        .flat_map(|row| row.iter())
+                        .filter(|&&brick| brick)
+                        .count()
+                )
+            }),
+            details,
+        }
+    }
+
+    fn record(&self) -> GameRecord {
+        let outcome = if self.won() {
+            "Win"
+        } else if self.game_over {
+            "Game Over"
+        } else {
+            "Quit"
+        };
+        GameRecord::new(self.name(), self.score, outcome)
     }
 }

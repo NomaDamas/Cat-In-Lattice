@@ -2,6 +2,9 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
 /// Fixed width allocated to the cat art panel (characters).
 pub const CAT_PANEL_WIDTH: u16 = 28;
+const IDEAL_GAME_PANEL_WIDTH: u16 = 40;
+const MIN_GAME_PANEL_WIDTH: u16 = 34;
+const MIN_BANNER_PANEL_WIDTH: u16 = 22;
 
 /// Height of the bottom help bar.
 const HELP_BAR_HEIGHT: u16 = 1;
@@ -53,10 +56,7 @@ impl AppLayout {
         // Split vertically: main content area on top, help bar at bottom.
         let vert = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Min(1),
-                Constraint::Length(HELP_BAR_HEIGHT),
-            ])
+            .constraints([Constraint::Min(1), Constraint::Length(HELP_BAR_HEIGHT)])
             .split(area);
 
         let main_area = vert[0];
@@ -70,10 +70,7 @@ impl AppLayout {
 
                 let cols = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Length(cat_w),
-                        Constraint::Min(1),
-                    ])
+                    .constraints([Constraint::Length(cat_w), Constraint::Min(1)])
                     .split(main_area);
 
                 AppLayout {
@@ -86,8 +83,17 @@ impl AppLayout {
             LayoutMode::Gaming => {
                 let cat_w = CAT_PANEL_WIDTH.min(main_area.width.saturating_sub(2));
                 let remaining = main_area.width.saturating_sub(cat_w);
-                let banner_w = (remaining / 3).max(1);
-                let game_w = remaining.saturating_sub(banner_w).max(1);
+                let max_game_w = remaining.saturating_sub(1);
+                let min_game_w = MIN_GAME_PANEL_WIDTH.min(max_game_w);
+                let mut game_w = IDEAL_GAME_PANEL_WIDTH.min(max_game_w);
+
+                if remaining > min_game_w + MIN_BANNER_PANEL_WIDTH {
+                    game_w = game_w.min(remaining.saturating_sub(MIN_BANNER_PANEL_WIDTH));
+                } else {
+                    game_w = min_game_w;
+                }
+
+                let banner_w = remaining.saturating_sub(game_w).max(1);
 
                 let cols = Layout::default()
                     .direction(Direction::Horizontal)
@@ -121,10 +127,7 @@ mod tests {
         assert!(layout.cat.width > 0);
         assert!(layout.banner.width > 0);
         assert_eq!(layout.help_bar.height, HELP_BAR_HEIGHT);
-        assert_eq!(
-            layout.cat.width + layout.banner.width,
-            area.width
-        );
+        assert_eq!(layout.cat.width + layout.banner.width, area.width);
     }
 
     #[test]
@@ -136,6 +139,8 @@ mod tests {
         assert!(game.width > 0);
         assert!(layout.cat.width > 0);
         assert!(layout.banner.width > 0);
+        assert!(layout.banner.width >= MIN_BANNER_PANEL_WIDTH);
+        assert!(game.width <= IDEAL_GAME_PANEL_WIDTH);
     }
 
     #[test]

@@ -112,9 +112,11 @@ impl AlertQueue {
     /// Get the highest-priority active alert (most recent among ties).
     pub fn top(&mut self) -> Option<&Alert> {
         self.prune_expired();
-        self.alerts
-            .iter()
-            .max_by(|a, b| a.priority.cmp(&b.priority).then(a.created_at.cmp(&b.created_at)))
+        self.alerts.iter().max_by(|a, b| {
+            a.priority
+                .cmp(&b.priority)
+                .then(a.created_at.cmp(&b.created_at))
+        })
     }
 
     /// Returns true if any active high-priority alert exists.
@@ -127,7 +129,11 @@ impl AlertQueue {
     pub fn active(&mut self) -> Vec<&Alert> {
         self.prune_expired();
         let mut refs: Vec<&Alert> = self.alerts.iter().collect();
-        refs.sort_by(|a, b| b.priority.cmp(&a.priority).then(b.created_at.cmp(&a.created_at)));
+        refs.sort_by(|a, b| {
+            b.priority
+                .cmp(&a.priority)
+                .then(b.created_at.cmp(&a.created_at))
+        });
         refs
     }
 
@@ -177,10 +183,7 @@ mod tests {
     fn high_priority_overrides() {
         let mut q = AlertQueue::default();
         q.push(Alert::new(AlertType::AgentProgress, "low"));
-        q.push(
-            Alert::new(AlertType::AgentError, "critical")
-                .with_priority(Priority::Critical),
-        );
+        q.push(Alert::new(AlertType::AgentError, "critical").with_priority(Priority::Critical));
         let top = q.top().unwrap();
         assert_eq!(top.priority, Priority::Critical);
     }

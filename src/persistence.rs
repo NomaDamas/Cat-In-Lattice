@@ -1,7 +1,15 @@
 use crate::cat::state::CatState;
+use crate::games::GameRecord;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 const STATE_FILE: &str = "cat_state.json";
+const GAME_RECORDS_FILE: &str = "game_records.json";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct StoredGameRecords {
+    items: Vec<GameRecord>,
+}
 
 /// Manages save/load of cat state to disk.
 pub struct Persistence {
@@ -39,10 +47,48 @@ impl Persistence {
         if let Some(parent) = self.path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let json = state
-            .to_json()
-            .map_err(std::io::Error::other)?;
+        let json = state.to_json().map_err(std::io::Error::other)?;
         std::fs::write(&self.path, json)
+    }
+
+    pub fn load_game_records(&self) -> Vec<GameRecord> {
+        let path = self.records_path();
+        if !path.exists() {
+            return Vec::new();
+        }
+
+        match std::fs::read_to_string(&path) {
+            Ok(json) => serde_json::from_str::<StoredGameRecords>(&json)
+                .map(|records| records.items)
+                .unwrap_or_else(|e| {
+                    eprintln!("Warning: corrupt game records file, starting fresh: {e}");
+                    Vec::new()
+                }),
+            Err(e) => {
+                eprintln!("Warning: could not read game records file: {e}");
+                Vec::new()
+            }
+        }
+    }
+
+    pub fn save_game_records(&self, records: &[GameRecord]) -> std::io::Result<()> {
+        let path = self.records_path();
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        let json = serde_json::to_string_pretty(&StoredGameRecords {
+            items: records.to_vec(),
+        })
+        .map_err(std::io::Error::other)?;
+        std::fs::write(path, json)
+    }
+
+    fn records_path(&self) -> PathBuf {
+        self.path
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join(GAME_RECORDS_FILE)
     }
 }
 
@@ -116,5 +162,24 @@ mod tests {
         assert!(tmp.join(STATE_FILE).exists());
 
         let _ = std::fs::remove_dir_all(std::env::temp_dir().join("cil-test-persist-mkdir"));
+    }
+
+    #[test]
+    fn test_save_load_game_records_roundtrip() {
+        let tmp = std::env::temp_dir().join("cil-test-game-records-roundtrip");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+
+        let p = Persistence::new(&tmp);
+        let records = vec![
+            GameRecord::new("Breakout", 120, "Win"),
+            GameRecord::new("Snake", 8, "Game Over"),
+        ];
+
+        p.save_game_records(&records).unwrap();
+        let loaded = p.load_game_records();
+        assert_eq!(loaded, records);
+
+        let _ = std::fs::remove_dir_all(&tmp);
     }
 }

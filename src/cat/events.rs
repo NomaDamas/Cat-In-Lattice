@@ -101,8 +101,8 @@ impl Default for EventScheduler {
             generated_for_day: None,
             successes: 0,
             failures: 0,
-            active_hour_start: 8,  // 8 AM
-            active_hour_end: 23,   // 11 PM
+            active_hour_start: 8, // 8 AM
+            active_hour_end: 23,  // 11 PM
             events_per_day: 20,
             special_events_per_day: 3,
         }
