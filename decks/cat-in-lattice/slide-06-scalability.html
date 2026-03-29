@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>Cat-In-Lattice — Scalability</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #0d1117;
+    padding: 72px 120px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3; position: relative;
+  }
+  .slide-number {
+    position: absolute; top: 48px; right: 64px;
+    font-size: 18px; color: #484f58;
+  }
+  h1 {
+    font-size: 56px; font-weight: 800;
+    color: #f0a040; margin-bottom: 12px;
+  }
+  .insight {
+    font-size: 26px; color: #8b949e;
+    margin-bottom: 40px; border-left: 4px solid #f0a040;
+    padding-left: 20px; line-height: 1.5;
+  }
+  .insight strong { color: #f0a040; }
+  .roadmap {
+    display: grid; grid-template-columns: 1fr 32px 1fr;
+    gap: 0; height: 680px;
+  }
+  .phase {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 16px; padding: 36px;
+    display: flex; flex-direction: column;
+  }
+  .phase-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .phase-num {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #0d1117;
+  }
+  .phase-title {
+    font-size: 30px; font-weight: 700;
+  }
+  .phase-sub {
+    font-size: 18px; color: #8b949e; margin-bottom: 20px;
+  }
+  .item-list { list-style: none; padding: 0; flex: 1; }
+  .item-list li {
+    font-size: 20px; color: #c9d1d9; line-height: 1.5;
+    padding: 10px 0; border-bottom: 1px solid #21262d;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .item-list li:last-child { border-bottom: none; }
+  .item-list .icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .item-list .highlight { color: #f0a040; font-weight: 600; }
+  .item-list .highlight-green { color: #3fb950; font-weight: 600; }
+  .item-list .highlight-blue { color: #58a6ff; font-weight: 600; }
+  .arrow-col {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .arrow {
+    font-size: 28px; color: #484f58;
+  }
+  .phase-left .phase-num { background: #d2a8ff; }
+  .phase-left .phase-title { color: #d2a8ff; }
+  .phase-right .phase-num { background: #f0a040; }
+  .phase-right .phase-title { color: #f0a040; }
+  .bottom-note {
+    position: absolute; bottom: 48px; left: 120px; right: 120px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .moat {
+    background: #1c2128; border: 1px solid #30363d;
+    border-radius: 8px; padding: 12px 24px;
+    font-size: 18px; color: #8b949e;
+  }
+  .moat strong { color: #ff6b6b; }
+  .transition {
+    font-size: 20px; color: #3fb950; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="slide-number">06 / 06</div>
+  <h1>Scalability</h1>
+  <div class="insight">
+    에이전트가 8개 세션을 돌리는 동안, 사람이 실제로 보는 건 이 작은 pane 뿐.<br>
+    <strong>"터미널의 잉여 공간"이 아니라 "에이전트 시대에 인간의 시선이 유일하게 머무는 공간"</strong>
+  </div>
+
+  <div class="roadmap">
+    <div class="phase phase-left">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        <div class="phase-title">멀티 에이전트 관제탑</div>
+      </div>
+      <div class="phase-sub">개인 도구 → 없으면 불편한 도구</div>
+      <ul class="item-list">
+        <li>
+          <div class="icon">📡</div>
+          <div><span class="highlight">8개 세션 통합 대시보드</span> — 어떤 세션이 블로킹됐는지, 어디에 사람이 필요한지 한눈에</div>
+        </li>
+        <li>
+          <div class="icon">🔔</div>
+          <div><span class="highlight">스마트 알림 라우팅</span> — "3번 세션이 approval 기다리고 있어요" → 고양이가 알려줌</div>
+        </li>
+        <li>
+          <div class="icon">🎯</div>
+          <div><span class="highlight">세션 간 우선순위</span> — 긴급 에러 하이라이트, 자동 포커스 유도</div>
+        </li>
+        <li>
+          <div class="icon">📊</div>
+          <div><span class="highlight-green">에이전트 fleet 효율</span> — 세션별 진행률, 병목 시각화</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="arrow-col">
+      <div class="arrow">→</div>
+    </div>
+
+    <div class="phase phase-right">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        <div class="phase-title">사내 소셜 레이어</div>
+      </div>
+      <div class="phase-sub">개인 도구 → 팀이 같이 쓰는 도구 (바이럴 + 리텐션)</div>
+      <ul class="item-list">
+        <li>
+          <div class="icon">🐱</div>
+          <div><span class="highlight-blue">팀원 고양이 방문</span> — 동료의 고양이가 내 pane에 놀러 옴. 상호작용 가능</div>
+        </li>
+        <li>
+          <div class="icon">🏆</div>
+          <div><span class="highlight-blue">팀 리더보드</span> — 코딩 세션 성공률, 미니게임 스코어, 고양이 친밀도 랭킹</div>
+        </li>
+        <li>
+          <div class="icon">🎉</div>
+          <div><span class="highlight-blue">공유 이벤트</span> — 팀 배포 성공 → 모든 고양이 파티 모드</div>
+        </li>
+        <li>
+          <div class="icon">🔗</div>
+          <div><span class="highlight-green">Slack 연동 이미 있음</span> — 팀 기능 확장의 자연스러운 진입점</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="bottom-note">
+    <div class="moat">
+      <strong>Moat:</strong> 터미널 네이티브가 이 기능을 넣기 전에 플러그인 생태계로 네트워크 효과 선점
+    </div>
+    <div class="transition">
+      재미있는 도구 → 없으면 불편한 도구 → 팀 인프라
+    </div>
+  </div>
+</div>
+<script>(function(){function s(){var e=document.querySelector(".slide");if(!e)return;var sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);e.style.transform="scale("+sc+")";e.style.transformOrigin="top left";document.body.style.width=Math.ceil(1920*sc)+"px";document.body.style.height=Math.ceil(1080*sc)+"px";document.body.style.overflow="hidden";}s();window.addEventListener("resize",s);})();</script>
+</body>
+</html>
